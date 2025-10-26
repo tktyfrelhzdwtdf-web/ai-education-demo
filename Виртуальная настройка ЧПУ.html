@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Виртуальная настройка ЧПУ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .simulator {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" opacity="0.1"><path d="M20,20 L80,20 L80,80 L20,80 Z" fill="none" stroke="white" stroke-width="2"/><circle cx="50" cy="50" r="15" fill="none" stroke="white" stroke-width="1"/><path d="M35,35 L65,65 M65,35 L35,65" stroke="white" stroke-width="1"/></svg>');
+            background-size: 200px;
+            opacity: 0.1;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 25px;
+        }
+        @media (max-width: 1100px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        .control-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .visualization {
+            background: #2c3e50;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #e74c3c;
+            position: relative;
+            min-height: 600px;
+            overflow: hidden;
+        }
+        .panel-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .panel-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .panel-title i {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .param-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .value-display {
+            min-width: 80px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            background: #e8f4fc;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #3498db;
+        }
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+        .btn i {
+            margin-right: 8px;
+        }
+        .btn-danger {
+            background: #e74c3c;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-success:hover {
+            background: #219653;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .workarea {
+            width: 100%;
+            height: 500px;
+            background: #1a2530;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+            border: 2px solid #34495e;
+        }
+        .machine {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #7f8c8d;
+            border-top: 5px solid #95a5a6;
+        }
+        .spindle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #34495e;
+            border-radius: 50%;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            border: 3px solid #2c3e50;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+            transition: all 0.5s;
+        }
+        .workpiece {
+            position: absolute;
+            background: #e67e22;
+            border: 2px solid #d35400;
+            transition: all 0.5s;
+        }
+        .tool-path {
+            position: absolute;
+            border: 2px dashed #3498db;
+            pointer-events: none;
+        }
+        .coordinates {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .g-code-preview {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #34495e;
+        }
+        .status-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .status-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .warning {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            color: #7f8c8d;
+            cursor: help;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator">
+        <div class="header">
+            <h1>🔧 ВИРТУАЛЬНАЯ НАСТРОЙКА ЧПУ</h1>
+            <div class="subtitle">Симулятор подготовки станка с ЧПУ к обработке детали. Настройте параметры, создайте управляющую программу и запустите виртуальную обработку.</div>
+        </div>
+        
+        <div class="content">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <div class="panel-title">
+                        <i>📐</i> Параметры заготовки
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Размер заготовки (X, Y, Z), мм:</label>
+                        <div class="input-group">
+                            <input type="number" id="sizeX" value="150" min="50" max="300" class="value-input">
+                            <input type="number" id="sizeY" value="100" min="50" max="300" class="value-input">
+                            <input type="number" id="sizeZ" value="30" min="10" max="100" class="value-input">
+                        </div>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Материал заготовки:</label>
+                        <select id="materialSelect">
+                            <option value="aluminum">Алюминий</option>
+                            <option value="steel">Сталь</option>
+                            <option value="stainless">Нержавеющая сталь</option>
+                            <option value="brass">Латунь</option>
+                            <option value="copper">Медь</option>
+                            <option value="titanium">Титан</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="panel-title">
+                        <i>🔧</i> Параметры инструмента
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Тип инструмента:</label>
+                        <select id="toolSelect">
+                            <option value="endmill">Торцевая фреза</option>
+                            <option value="drill">Сверло</option>
+                            <option value="ballmill">Сферическая фреза</option>
+                            <option value="facemill">Фасонная фреза</option>
+                        </select>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Диаметр инструмента, мм: <span id="toolDiameterValue" class="value-display">10</span></label>
+                        <div class="slider-container">
+                            <span>1</span>
+                            <input type="range" min="1" max="20" value="10" class="slider" id="toolDiameterSlider">
+                            <span>20</span>
+                        </div>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Скорость шпинделя, об/мин: <span id="spindleSpeedValue" class="value-display">3000</span></label>
+                        <div class="slider-container">
+                            <span>500</span>
+                            <input type="range" min="500" max="10000" value="3000" class="slider" id="spindleSpeedSlider">
+                            <span>10000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Подача, мм/мин: <span id="feedRateValue" class="value-display">500</span></label>
+                        <div class="slider-container">
+                            <span>100</span>
+                            <input type="range" min="100" max="2000" value="500" class="slider" id="feedRateSlider">
+                            <span>2000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="panel-title">
+                        <i>📋</i> Управляющая программа
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Операция обработки:</label>
+                        <select id="operationSelect">
+                            <option value="facing">Торцевание</option>
+                            <option value="pocket">Обработка кармана</option>
+                            <option value="contour">Контурная обработка</option>
+                            <option value="drilling">Сверление</option>
+                        </select>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Глубина резания, мм: <span id="cutDepthValue" class="value-display">2</span></label>
+                        <div class="slider-container">
+                            <span>0.5</span>
+                            <input type="range" min="0.5" max="5" step="0.1" value="2" class="slider" id="cutDepthSlider">
+                            <span>5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn" id="generateGCodeBtn">
+                            <i>⚙️</i> Сгенерировать G-код
+                        </button>
+                        <button class="btn btn-success" id="runSimulationBtn">
+                            <i>▶️</i> Запустить симуляцию
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="status-panel">
+                    <div class="panel-title">
+                        <i>📊</i> Статус системы
+                    </div>
+                    
+                    <div class="status-item">
+                        <span>Готовность станка:</span>
+                        <span class="status-value success" id="machineStatus">Готов</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Инструмент установлен:</span>
+                        <span class="status-value success" id="toolStatus">Да</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Заготовка закреплена:</span>
+                        <span class="status-value success" id="workpieceStatus">Да</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Программа загружена:</span>
+                        <span class="status-value warning" id="programStatus">Нет</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Время обработки:</span>
+                        <span class="status-value" id="processingTime">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization">
+                <div class="workarea" id="workarea">
+                    <div class="coordinates" id="coordinates">X: 0.000  Y: 0.000  Z: 0.000</div>
+                    <div class="machine"></div>
+                    <div class="spindle" id="spindle">Шпиндель</div>
+                    <div class="workpiece" id="workpiece"></div>
+                    <div class="tool-path" id="toolPath"></div>
+                </div>
+                
+                <div class="g-code-preview" id="gCodePreview">
+                    // G-код появится здесь после генерации
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-danger" id="resetBtn">
+                        <i>🔄</i> Сбросить симуляцию
+                    </button>
+                    <button class="btn" id="saveProgramBtn">
+                        <i>💾</i> Сохранить программу
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-title">✅ Обработка завершена!</div>
+            <p>Виртуальная обработка детали успешно завершена.</p>
+            <p>Общее время обработки: <span id="finalTime">5:24</span></p>
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn" id="closeModalBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Получаем элементы DOM
+        const sizeXInput = document.getElementById('sizeX');
+        const sizeYInput = document.getElementById('sizeY');
+        const sizeZInput = document.getElementById('sizeZ');
+        const materialSelect = document.getElementById('materialSelect');
+        const toolSelect = document.getElementById('toolSelect');
+        const toolDiameterSlider = document.getElementById('toolDiameterSlider');
+        const toolDiameterValue = document.getElementById('toolDiameterValue');
+        const spindleSpeedSlider = document.getElementById('spindleSpeedSlider');
+        const spindleSpeedValue = document.getElementById('spindleSpeedValue');
+        const feedRateSlider = document.getElementById('feedRateSlider');
+        const feedRateValue = document.getElementById('feedRateValue');
+        const operationSelect = document.getElementById('operationSelect');
+        const cutDepthSlider = document.getElementById('cutDepthSlider');
+        const cutDepthValue = document.getElementById('cutDepthValue');
+        
+        const generateGCodeBtn = document.getElementById('generateGCodeBtn');
+        const runSimulationBtn = document.getElementById('runSimulationBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const saveProgramBtn = document.getElementById('saveProgramBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        const workarea = document.getElementById('workarea');
+        const spindle = document.getElementById('spindle');
+        const workpiece = document.getElementById('workpiece');
+        const toolPath = document.getElementById('toolPath');
+        const coordinates = document.getElementById('coordinates');
+        const gCodePreview = document.getElementById('gCodePreview');
+        
+        const machineStatus = document.getElementById('machineStatus');
+        const toolStatus = document.getElementById('toolStatus');
+        const workpieceStatus = document.getElementById('workpieceStatus');
+        const programStatus = document.getElementById('programStatus');
+        const processingTime = document.getElementById('processingTime');
+        
+        const successModal = document.getElementById('successModal');
+        const finalTime = document.getElementById('finalTime');
+        
+        // Переменные состояния
+        let isSimulationRunning = false;
+        let gCode = "";
+        
+        // Инициализация
+        function initializeSimulator() {
+            updateWorkpiece();
+            updateToolDiameter();
+            updateSpindleSpeed();
+            updateFeedRate();
+            updateCutDepth();
+        }
+        
+        // Обновление отображения заготовки
+        function updateWorkpiece() {
+            const sizeX = parseInt(sizeXInput.value);
+            const sizeY = parseInt(sizeYInput.value);
+            const sizeZ = parseInt(sizeZInput.value);
+            
+            // Масштабирование для визуализации
+            const scale = 2;
+            const visualX = sizeX / scale;
+            const visualY = sizeY / scale;
+            
+            workpiece.style.width = visualX + 'px';
+            workpiece.style.height = visualY + 'px';
+            workpiece.style.left = (workarea.offsetWidth - visualX) / 2 + 'px';
+            workpiece.style.bottom = (workarea.offsetHeight - visualY) / 2 + 'px';
+            
+            // Обновляем статус
+            workpieceStatus.textContent = "Да";
+            workpieceStatus.className = "status-value success";
+        }
+        
+        // Обновление диаметра инструмента
+        function updateToolDiameter() {
+            toolDiameterValue.textContent = toolDiameterSlider.value;
+        }
+        
+        // Обновление скорости шпинделя
+        function updateSpindleSpeed() {
+            spindleSpeedValue.textContent = spindleSpeedSlider.value;
+        }
+        
+        // Обновление скорости подачи
+        function updateFeedRate() {
+            feedRateValue.textContent = feedRateSlider.value;
+        }
+        
+        // Обновление глубины резания
+        function updateCutDepth() {
+            cutDepthValue.textContent = cutDepthSlider.value;
+        }
+        
+        // Генерация G-кода
+        function generateGCode() {
+            const sizeX = parseInt(sizeXInput.value);
+            const sizeY = parseInt(sizeYInput.value);
+            const sizeZ = parseInt(sizeZInput.value);
+            const toolDiameter = parseInt(toolDiameterSlider.value);
+            const spindleSpeed = parseInt(spindleSpeedSlider.value);
+            const feedRate = parseInt(feedRateSlider.value);
+            const cutDepth = parseFloat(cutDepthSlider.value);
+            const operation = operationSelect.value;
+            const material = materialSelect.value;
+            
+            let code = "";
+            
+            // Заголовок программы
+            code += `(Программа обработки для ${material})\n`;
+            code += `(Операция: ${operationSelect.options[operationSelect.selectedIndex].text})\n`;
+            code += `(Инструмент: ${toolSelect.options[toolSelect.selectedIndex].text}, Ø${toolDiameter}мм)\n`;
+            code += `(Скорость шпинделя: ${spindleSpeed} об/мин)\n`;
+            code += `(Подача: ${feedRate} мм/мин)\n\n`;
+            
+            // Начало программы
+            code += "G21 G90 G40 G49 G80\n"; // Безопасные настройки
+            code += "G28 G91 Z0\n"; // Возврат в нуль по Z
+            code += "G28 G91 X0 Y0\n"; // Возврат в нуль по X и Y
+            code += `T1 M06\n`; // Смена инструмента
+            code += `S${spindleSpeed} M03\n`; // Включение шпинделя
+            code += "G54\n"; // Рабочая система координат
+            code += `G00 X0 Y0\n`; // Быстрое перемещение в начальную позицию
+            code += `G43 Z10 H01\n`; // Коррекция на длину инструмента
+            
+            // Генерация кода в зависимости от операции
+            switch(operation) {
+                case "facing":
+                    code += generateFacingCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth);
+                    break;
+                case "pocket":
+                    code += generatePocketCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth);
+                    break;
+                case "contour":
+                    code += generateContourCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth);
+                    break;
+                case "drilling":
+                    code += generateDrillingCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate);
+                    break;
+            }
+            
+            // Завершение программы
+            code += "\nG00 Z50\n"; // Подъем инструмента
+            code += "M05\n"; // Выключение шпинделя
+            code += "G28 G91 Z0\n"; // Возврат в нуль по Z
+            code += "G28 G91 X0 Y0\n"; // Возврат в нуль по X и Y
+            code += "M30\n"; // Конец программы
+            
+            gCode = code;
+            gCodePreview.textContent = code;
+            programStatus.textContent = "Да";
+            programStatus.className = "status-value success";
+            
+            // Визуализация траектории инструмента
+            visualizeToolPath(operation, sizeX, sizeY, toolDiameter);
+        }
+        
+        // Генерация кода для торцевания
+        function generateFacingCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth) {
+            let code = "";
+            const stepover = toolDiameter * 0.7; // Перекрытие проходов 70%
+            const passes = Math.ceil(sizeZ / cutDepth);
+            
+            code += `(Торцевание поверхности)\n`;
+            
+            for (let pass = 0; pass < passes; pass++) {
+                const currentDepth = Math.min((pass + 1) * cutDepth, sizeZ);
+                code += `G01 Z-${currentDepth.toFixed(2)} F${feedRate/2}\n`;
+                
+                let yPos = toolDiameter / 2;
+                let direction = 1; // Направление движения: 1 - вперед, -1 - назад
+                
+                while (yPos < sizeY) {
+                    if (direction === 1) {
+                        code += `G01 X${sizeX} Y${yPos.toFixed(2)} F${feedRate}\n`;
+                    } else {
+                        code += `G01 X0 Y${yPos.toFixed(2)} F${feedRate}\n`;
+                    }
+                    
+                    yPos += stepover;
+                    direction *= -1;
+                }
+            }
+            
+            return code;
+        }
+        
+        // Генерация кода для обработки кармана
+        function generatePocketCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth) {
+            let code = "";
+            const pocketWidth = sizeX * 0.7;
+            const pocketHeight = sizeY * 0.7;
+            const startX = (sizeX - pocketWidth) / 2;
+            const startY = (sizeY - pocketHeight) / 2;
+            const stepover = toolDiameter * 0.5;
+            const passes = Math.ceil(sizeZ / cutDepth);
+            
+            code += `(Обработка кармана)\n`;
+            
+            for (let pass = 0; pass < passes; pass++) {
+                const currentDepth = Math.min((pass + 1) * cutDepth, sizeZ);
+                code += `G01 Z-${currentDepth.toFixed(2)} F${feedRate/2}\n`;
+                
+                // Контур кармана
+                code += `G01 X${startX} Y${startY} F${feedRate}\n`;
+                code += `G01 X${startX + pocketWidth} Y${startY}\n`;
+                code += `G01 X${startX + pocketWidth} Y${startY + pocketHeight}\n`;
+                code += `G01 X${startX} Y${startY + pocketHeight}\n`;
+                code += `G01 X${startX} Y${startY}\n`;
+                
+                // Спиральное фрезерование
+                let currentWidth = pocketWidth - stepover;
+                let currentHeight = pocketHeight - stepover;
+                let currentX = startX + stepover/2;
+                let currentY = startY + stepover/2;
+                
+                while (currentWidth > 0 && currentHeight > 0) {
+                    code += `G01 X${currentX} Y${currentY} F${feedRate}\n`;
+                    code += `G01 X${currentX + currentWidth} Y${currentY}\n`;
+                    code += `G01 X${currentX + currentWidth} Y${currentY + currentHeight}\n`;
+                    code += `G01 X${currentX} Y${currentY + currentHeight}\n`;
+                    code += `G01 X${currentX} Y${currentY}\n`;
+                    
+                    currentWidth -= stepover * 2;
+                    currentHeight -= stepover * 2;
+                    currentX += stepover;
+                    currentY += stepover;
+                }
+            }
+            
+            return code;
+        }
+        
+        // Генерация кода для контурной обработки
+        function generateContourCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate, cutDepth) {
+            let code = "";
+            const offset = toolDiameter / 2;
+            const passes = Math.ceil(sizeZ / cutDepth);
+            
+            code += `(Контурная обработка)\n`;
+            
+            for (let pass = 0; pass < passes; pass++) {
+                const currentDepth = Math.min((pass + 1) * cutDepth, sizeZ);
+                code += `G01 Z-${currentDepth.toFixed(2)} F${feedRate/2}\n`;
+                
+                // Внешний контур с учетом диаметра инструмента
+                code += `G01 X${offset} Y${offset} F${feedRate}\n`;
+                code += `G01 X${sizeX - offset} Y${offset}\n`;
+                code += `G01 X${sizeX - offset} Y${sizeY - offset}\n`;
+                code += `G01 X${offset} Y${sizeY - offset}\n`;
+                code += `G01 X${offset} Y${offset}\n`;
+            }
+            
+            return code;
+        }
+        
+        // Генерация кода для сверления
+        function generateDrillingCode(sizeX, sizeY, sizeZ, toolDiameter, feedRate) {
+            let code = "";
+            const holeCount = 4;
+            const margin = 20;
+            
+            code += `(Сверление отверстий)\n`;
+            
+            // Координаты отверстий
+            const holes = [
+                {x: margin, y: margin},
+                {x: sizeX - margin, y: margin},
+                {x: sizeX - margin, y: sizeY - margin},
+                {x: margin, y: sizeY - margin}
+            ];
+            
+            for (let i = 0; i < holes.length; i++) {
+                const hole = holes[i];
+                code += `G00 X${hole.x} Y${hole.y}\n`;
+                code += `G01 Z-${sizeZ} F${feedRate/3}\n`;
+                code += `G00 Z10\n`;
+            }
+            
+            return code;
+        }
+        
+        // Визуализация траектории инструмента
+        function visualizeToolPath(operation, sizeX, sizeY, toolDiameter) {
+            toolPath.innerHTML = '';
+            
+            const scale = 2;
+            const visualX = sizeX / scale;
+            const visualY = sizeY / scale;
+            const offsetX = (workarea.offsetWidth - visualX) / 2;
+            const offsetY = (workarea.offsetHeight - visualY) / 2;
+            
+            const path = document.createElement('div');
+            path.className = 'tool-path';
+            
+            switch(operation) {
+                case "facing":
+                    // Визуализация для торцевания
+                    path.style.width = visualX + 'px';
+                    path.style.height = visualY + 'px';
+                    path.style.left = offsetX + 'px';
+                    path.style.bottom = offsetY + 'px';
+                    path.style.border = '2px dashed #3498db';
+                    break;
+                    
+                case "pocket":
+                    // Визуализация для кармана
+                    const pocketWidth = visualX * 0.7;
+                    const pocketHeight = visualY * 0.7;
+                    const pocketX = offsetX + (visualX - pocketWidth) / 2;
+                    const pocketY = offsetY + (visualY - pocketHeight) / 2;
+                    
+                    path.style.width = pocketWidth + 'px';
+                    path.style.height = pocketHeight + 'px';
+                    path.style.left = pocketX + 'px';
+                    path.style.bottom = pocketY + 'px';
+                    path.style.border = '2px dashed #e74c3c';
+                    break;
+                    
+                case "contour":
+                    // Визуализация для контурной обработки
+                    const contourOffset = (toolDiameter / scale) / 2;
+                    path.style.width = visualX - contourOffset * 2 + 'px';
+                    path.style.height = visualY - contourOffset * 2 + 'px';
+                    path.style.left = offsetX + contourOffset + 'px';
+                    path.style.bottom = offsetY + contourOffset + 'px';
+                    path.style.border = '2px dashed #2ecc71';
+                    break;
+                    
+                case "drilling":
+                    // Визуализация для сверления
+                    const margin = 20 / scale;
+                    const holes = [
+                        {x: offsetX + margin, y: offsetY + margin},
+                        {x: offsetX + visualX - margin, y: offsetY + margin},
+                        {x: offsetX + visualX - margin, y: offsetY + visualY - margin},
+                        {x: offsetX + margin, y: offsetY + visualY - margin}
+                    ];
+                    
+                    holes.forEach(hole => {
+                        const drillPoint = document.createElement('div');
+                        drillPoint.className = 'tool-path';
+                        drillPoint.style.width = '10px';
+                        drillPoint.style.height = '10px';
+                        drillPoint.style.left = hole.x - 5 + 'px';
+                        drillPoint.style.bottom = hole.y - 5 + 'px';
+                        drillPoint.style.borderRadius = '50%';
+                        drillPoint.style.backgroundColor = 'rgba(231, 76, 60, 0.5)';
+                        drillPoint.style.border = 'none';
+                        toolPath.appendChild(drillPoint);
+                    });
+                    break;
+            }
+            
+            if (operation !== "drilling") {
+                toolPath.appendChild(path);
+            }
+        }
+        
+        // Запуск симуляции обработки
+        function runSimulation() {
+            if (!gCode) {
+                alert("Сначала сгенерируйте G-код!");
+                return;
+            }
+            
+            if (isSimulationRunning) return;
+            
+            isSimulationRunning = true;
+            runSimulationBtn.disabled = true;
+            machineStatus.textContent = "Работает";
+            machineStatus.className = "status-value warning";
+            
+            // Анимация шпинделя
+            spindle.style.animation = "spin 2s linear infinite";
+            
+            // Имитация времени обработки
+            let time = 0;
+            const timer = setInterval(() => {
+                time++;
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                processingTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+            
+            // Завершение симуляции через случайное время (5-15 секунд)
+            const simulationTime = Math.floor(Math.random() * 10000) + 5000;
+            setTimeout(() => {
+                clearInterval(timer);
+                isSimulationRunning = false;
+                runSimulationBtn.disabled = false;
+                machineStatus.textContent = "Готов";
+                machineStatus.className = "status-value success";
+                spindle.style.animation = "none";
+                
+                // Показ модального окна с результатами
+                finalTime.textContent = processingTime.textContent;
+                successModal.style.display = "flex";
+            }, simulationTime);
+        }
+        
+        // Сброс симуляции
+        function resetSimulation() {
+            isSimulationRunning = false;
+            runSimulationBtn.disabled = false;
+            machineStatus.textContent = "Готов";
+            machineStatus.className = "status-value success";
+            programStatus.textContent = "Нет";
+            programStatus.className = "status-value warning";
+            processingTime.textContent = "--:--";
+            spindle.style.animation = "none";
+            gCode = "";
+            gCodePreview.textContent = "// G-код появится здесь после генерации";
+            toolPath.innerHTML = '';
+            successModal.style.display = "none";
+        }
+        
+        // Сохранение программы
+        function saveProgram() {
+            if (!gCode) {
+                alert("Сначала сгенерируйте G-код!");
+                return;
+            }
+            
+            const blob = new Blob([gCode], {type: "text/plain"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "cnc_program.nc";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert("Программа сохранена как 'cnc_program.nc'");
+        }
+        
+        // Назначение обработчиков событий
+        sizeXInput.addEventListener('change', updateWorkpiece);
+        sizeYInput.addEventListener('change', updateWorkpiece);
+        sizeZInput.addEventListener('change', updateWorkpiece);
+        toolDiameterSlider.addEventListener('input', updateToolDiameter);
+        spindleSpeedSlider.addEventListener('input', updateSpindleSpeed);
+        feedRateSlider.addEventListener('input', updateFeedRate);
+        cutDepthSlider.addEventListener('input', updateCutDepth);
+        
+        generateGCodeBtn.addEventListener('click', generateGCode);
+        runSimulationBtn.addEventListener('click', runSimulation);
+        resetBtn.addEventListener('click', resetSimulation);
+        saveProgramBtn.addEventListener('click', saveProgram);
+        closeModalBtn.addEventListener('click', () => {
+            successModal.style.display = "none";
+        });
+        
+        // Обновление координат при движении мыши по рабочей области
+        workarea.addEventListener('mousemove', (e) => {
+            const rect = workarea.getBoundingClientRect();
+            const scale = 2;
+            const x = ((e.clientX - rect.left) / workarea.offsetWidth) * parseInt(sizeXInput.value);
+            const y = ((e.clientY - rect.top) / workarea.offsetHeight) * parseInt(sizeYInput.value);
+            
+            coordinates.textContent = `X: ${x.toFixed(1)}  Y: ${y.toFixed(1)}  Z: 0.0`;
+        });
+        
+        // Инициализация при загрузке
+        window.addEventListener('load', initializeSimulator);
+        
+        // Добавляем CSS анимацию для шпинделя
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: translateX(-50%) rotate(0deg); }
+                100% { transform: translateX(-50%) rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

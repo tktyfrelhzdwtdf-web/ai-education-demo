@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Виртуальный подбор сварочных электродов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #059669;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+            --border: #cbd5e1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .position-item {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .position-item:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .position-item.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .position-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .position-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .position-code {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: var(--light-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .electrode-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .electrode-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .spec-item {
+            background: var(--light-gray);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .spec-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .spec-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .features-list {
+            margin-top: 20px;
+        }
+
+        .features-list h4 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .features-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .guide-section {
+            margin-top: 40px;
+        }
+
+        .guide-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .guide-content h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .guide-content ol, .guide-content ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .guide-content li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .tip-box {
+            background: rgba(5, 150, 105, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        .tip-title {
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .material-info {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-icon">
+                <i class="fas fa-welding"></i>
+            </div>
+            <h1>Виртуальный подбор сварочных электродов</h1>
+            <p class="subtitle">Образовательный симулятор для профессиональных сварщиков</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-sliders-h"></i> Параметры сварки</h2>
+                
+                <div class="form-group">
+                    <label for="material">Тип материала</label>
+                    <select id="material">
+                        <option value="">Выберите материал</option>
+                        <option value="steel">Углеродистая сталь</option>
+                        <option value="stainless">Нержавеющая сталь</option>
+                        <option value="aluminum">Алюминий</option>
+                        <option value="cast_iron">Чугун</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="thickness">Толщина металла (мм)</label>
+                    <input type="number" id="thickness" min="1" max="50" placeholder="Введите толщину от 1 до 50 мм">
+                </div>
+
+                <div class="form-group">
+                    <label>Пространственное положение</label>
+                    <div class="position-grid">
+                        <div class="position-item" data-position="flat">
+                            <div class="position-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="position-name">Нижнее</div>
+                            <div class="position-code">1G/1F</div>
+                        </div>
+                        <div class="position-item" data-position="horizontal">
+                            <div class="position-icon">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="position-name">Горизонтальное</div>
+                            <div class="position-code">2G/2F</div>
+                        </div>
+                        <div class="position-item" data-position="vertical">
+                            <div class="position-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="position-name">Вертикальное</div>
+                            <div class="position-code">3G/3F</div>
+                        </div>
+                        <div class="position-item" data-position="overhead">
+                            <div class="position-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="position-name">Потолочное</div>
+                            <div class="position-code">4G/4F</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="calculateBtn" class="btn" disabled>
+                    <i class="fas fa-search"></i> Подобрать электроды
+                </button>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-lightbulb"></i> Результаты и рекомендации</h2>
+                <div id="resultsContainer">
+                    <div id="initialMessage">
+                        <p>Заполните параметры сварки и нажмите "Подобрать электроды" для получения рекомендаций.</p>
+                        <div class="tip-box">
+                            <div class="tip-title"><i class="fas fa-info-circle"></i> Советы по выбору:</div>
+                            <ul>
+                                <li>Для тонких листов (1-3 мм) используйте электроды диаметром 2.0-2.5 мм</li>
+                                <li>При потолочной сварке выбирайте электроды с хорошим формированием шва</li>
+                                <li>Для ответственных конструкций предпочтительны электроды основного покрытия</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="loading" class="loading hidden">
+                        <div class="spinner"></div>
+                        <p>Анализируем параметры и подбираем оптимальные электроды...</p>
+                    </div>
+                    
+                    <div id="results" class="results-section"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-content">
+                <h3><i class="fas fa-book"></i> Образовательный контент</h3>
+                
+                <h4>Логика подбора электродов:</h4>
+                <ol>
+                    <li><strong>Соответствие материала</strong> - Электрод должен соответствовать основному металлу по химическому составу и механическим свойствам</li>
+                    <li><strong>Толщина металла</strong> - Определяет диаметр электрода и силу сварочного тока</li>
+                    <li><strong>Положение сварки</strong> - Влияет на выбор типа покрытия электрода</li>
+                    <li><strong>Требования к шву</strong> - Прочность, пластичность, коррозионная стойкость</li>
+                </ol>
+
+                <div class="material-info">
+                    <div class="tip-title"><i class="fas fa-exclamation-triangle"></i> Особенности материалов:</div>
+                    <ul>
+                        <li><strong>Углеродистая сталь</strong> - Наиболее распространенный материал, подходит большинство универсальных электродов</li>
+                        <li><strong>Нержавеющая сталь</strong> - Требует специальных электродов с легирующими элементами (хром, никель)</li>
+                        <li><strong>Алюминий</strong> - Высокая теплопроводность требует предварительного подогрева и специальных электродов</li>
+                        <li><strong>Чугун</strong> - Склонен к образованию трещин, требует электродов с графитовым покрытием</li>
+                    </ul>
+                </div>
+
+                <h4>Техника сварки - основные советы:</h4>
+                <ul>
+                    <li>Перед сваркой тщательно очищайте поверхность от ржавчины, масла и краски</li>
+                    <li>Правильно выбирайте силу тока: слишком малый - непровары, слишком большой - прожоги</li>
+                    <li>Поддерживайте постоянное расстояние между электродом и деталью (длина дуги)</li>
+                    <li>Для ответственных швов используйте многослойную сварку с промежуточной зачисткой</li>
+                    <li>После сварки дайте шву медленно остыть для предотвращения образования трещин</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>Виртуальный подбор сварочных электродов | Образовательный симулятор для сварщиков</p>
+            <p>© 2024 Все права защищены. Разработано в образовательных целях.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Данные по электродам
+        const electrodeDatabase = {
+            steel: [
+                {
+                    name: "УОНИ-13/55",
+                    diameter: "2.5-5.0 мм",
+                    current: "60-220 А",
+                    positions: ["flat", "horizontal", "vertical"],
+                    applications: "Ответственные конструкции из углеродистых и низколегированных сталей",
+                    features: [
+                        "Высокая пластичность и ударная вязкость",
+                        "Отличная стойкость к образованию трещин",
+                        "Подходит для работы в условиях низких температур",
+                        "Требует тщательной подготовки кромок"
+                    ],
+                    tips: "Используйте для мостовых конструкций, судостроения, нефтехимического оборудования"
+                },
+                {
+                    name: "МР-3",
+                    diameter: "2.0-5.0 мм",
+                    current: "50-220 А",
+                    positions: ["flat", "horizontal", "vertical", "overhead"],
+                    applications: "Универсальный электрод для углеродистых сталей",
+                    features: [
+                        "Легкое зажигание дуги",
+                        "Стабильное горение дуги",
+                        "Хорошее формирование шва",
+                        "Подходит для всех положений"
+                    ],
+                    tips: "Идеален для начинающих сварщиков и неответственных конструкций"
+                }
+            ],
+            stainless: [
+                {
+                    name: "ЦЛ-11",
+                    diameter: "2.5-4.0 мм",
+                    current: "60-160 А",
+                    positions: ["flat", "horizontal", "vertical"],
+                    applications: "Сварка нержавеющих сталей типа 12Х18Н10Т",
+                    features: [
+                        "Высокая коррозионная стойкость",
+                        "Отличная пластичность шва",
+                        "Минимальное разбрызгивание",
+                        "Подходит для пищевого оборудования"
+                    ],
+                    tips: "Обязательно используйте короткую дугу и минимальный зазор между электродом и деталью"
+                }
+            ],
+            aluminum: [
+                {
+                    name: "ОЗАНА-1",
+                    diameter: "3.0-5.0 мм",
+                    current: "90-200 А",
+                    positions: ["flat", "horizontal"],
+                    applications: "Сварка алюминиевых сплавов",
+                    features: [
+                        "Специальное покрытие для алюминия",
+                        "Хорошая стабильность дуги",
+                        "Минимальная пористость шва",
+                        "Требует предварительного подогрева"
+                    ],
+                    tips: "Перед сваркой прогрейте деталь до 150-200°C и используйте переменный ток"
+                }
+            ],
+            cast_iron: [
+                {
+                    name: "ЦЧ-4",
+                    diameter: "3.0-5.0 мм",
+                    current: "90-180 А",
+                    positions: ["flat", "horizontal"],
+                    applications: "Сварка и наплавка чугуна",
+                    features: [
+                        "Графитовое покрытие",
+                        "Минимальная усадка шва",
+                        "Отсутствие трещин при охлаждении",
+                        "Хорошая обрабатываемость шва"
+                    ],
+                    tips: "Используйте метод 'горячей' сварки с предварительным подогревом до 600°C"
+                }
+            ]
+        };
+
+        // Глобальные переменные
+        let selectedPosition = null;
+        const positionItems = document.querySelectorAll('.position-item');
+        const materialSelect = document.getElementById('material');
+        const thicknessInput = document.getElementById('thickness');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const initialMessage = document.getElementById('initialMessage');
+        const loadingDiv = document.getElementById('loading');
+        const resultsDiv = document.getElementById('results');
+
+        // Обработчики событий для выбора положения
+        positionItems.forEach(item => {
+            item.addEventListener('click', () => {
+                positionItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                selectedPosition = item.dataset.position;
+                updateCalculateButton();
+            });
+        });
+
+        // Обработчики для других полей
+        materialSelect.addEventListener('change', updateCalculateButton);
+        thicknessInput.addEventListener('input', updateCalculateButton);
+
+        function updateCalculateButton() {
+            const material = materialSelect.value;
+            const thickness = thicknessInput.value;
+            const hasPosition = selectedPosition !== null;
+            
+            calculateBtn.disabled = !(material && thickness && hasPosition && isValidThickness(thickness));
+        }
+
+        function isValidThickness(thickness) {
+            const num = parseInt(thickness);
+            return !isNaN(num) && num >= 1 && num <= 50;
+        }
+
+        // Обработчик кнопки расчета
+        calculateBtn.addEventListener('click', calculateElectrodes);
+
+        function calculateElectrodes() {
+            // Показать загрузку
+            initialMessage.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+
+            // Имитация загрузки
+            setTimeout(() => {
+                const material = materialSelect.value;
+                const thickness = parseInt(thicknessInput.value);
+                const position = selectedPosition;
+
+                // Получение рекомендаций
+                const recommendations = getElectrodeRecommendations(material, thickness, position);
+                
+                if (recommendations.length === 0) {
+                    showNoResults();
+                } else {
+                    showResults(recommendations, material, thickness, position);
+                }
+
+                loadingDiv.classList.add('hidden');
+                resultsDiv.classList.remove('hidden');
+            }, 800);
+        }
+
+        function getElectrodeRecommendations(material, thickness, position) {
+            const electrodes = electrodeDatabase[material] || [];
+            
+            return electrodes.filter(electrode => {
+                // Проверка положения
+                if (!electrode.positions.includes(position)) {
+                    return false;
+                }
+                
+                // Проверка толщины (простая логика)
+                const minDiameter = getMinDiameterForThickness(thickness);
+                const maxDiameter = getMaxDiameterForThickness(thickness);
+                const electrodeDiameterRange = electrode.diameter.split('-');
+                const electrodeMinDiameter = parseFloat(electrodeDiameterRange[0]);
+                const electrodeMaxDiameter = parseFloat(electrodeDiameterRange[1]);
+                
+                // Проверяем пересечение диапазонов
+                return !(electrodeMaxDiameter < minDiameter || electrodeMinDiameter > maxDiameter);
+            });
+        }
+
+        function getMinDiameterForThickness(thickness) {
+            if (thickness <= 3) return 2.0;
+            if (thickness <= 6) return 2.5;
+            if (thickness <= 12) return 3.0;
+            return 4.0;
+        }
+
+        function getMaxDiameterForThickness(thickness) {
+            if (thickness <= 3) return 2.5;
+            if (thickness <= 6) return 3.2;
+            if (thickness <= 12) return 4.0;
+            return 5.0;
+        }
+
+        function showResults(recommendations, material, thickness, position) {
+            let html = `
+                <div class="result-summary">
+                    <h3 style="color: var(--primary); margin-bottom: 20px;">
+                        Рекомендации для: ${getMaterialName(material)}, толщина ${thickness} мм, положение "${getPositionName(position)}"
+                    </h3>
+                </div>
+            `;
+
+            recommendations.forEach((electrode, index) => {
+                html += `
+                    <div class="result-card">
+                        <div class="electrode-name">${electrode.name}</div>
+                        
+                        <div class="electrode-specs">
+                            <div class="spec-item">
+                                <div class="spec-label">Диаметр</div>
+                                <div class="spec-value">${electrode.diameter}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Ток</div>
+                                <div class="spec-value">${electrode.current}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Применение</div>
+                                <div class="spec-value">${electrode.applications}</div>
+                            </div>
+                        </div>
+
+                        <div class="features-list">
+                            <h4>Особенности:</h4>
+                            <ul>
+                                ${electrode.features.map(feature => `<li><i class="fas fa-check-circle" style="color: var(--success);"></i> ${feature}</li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="tip-box">
+                            <div class="tip-title"><i class="fas fa-lightbulb"></i> Профессиональный совет:</div>
+                            <p>${electrode.tips}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function showNoResults() {
+            resultsDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning); margin-bottom: 20px;"></i>
+                    <h3 style="color: var(--dark); margin-bottom: 15px;">Не найдено подходящих электродов</h3>
+                    <p>Попробуйте изменить параметры сварки или проверьте правильность ввода.</p>
+                    <div class="tip-box" style="margin-top: 20px;">
+                        <div class="tip-title"><i class="fas fa-info-circle"></i> Рекомендации:</div>
+                        <ul>
+                            <li>Для очень тонких листов (1-2 мм) используйте электроды диаметром 2.0 мм</li>
+                            <li>Потолочная сварка возможна не со всеми типами электродов</li>
+                            <li>Некоторые материалы требуют специальных условий сварки</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+
+        function getMaterialName(materialCode) {
+            const names = {
+                steel: 'Углеродистая сталь',
+                stainless: 'Нержавеющая сталь',
+                aluminum: 'Алюминий',
+                cast_iron: 'Чугун'
+            };
+            return names[materialCode] || materialCode;
+        }
+
+        function getPositionName(positionCode) {
+            const names = {
+                flat: 'Нижнее',
+                horizontal: 'Горизонтальное',
+                vertical: 'Вертикальное',
+                overhead: 'Потолочное'
+            };
+            return names[positionCode] || positionCode;
+        }
+    </script>
+</body>
+</html>
+

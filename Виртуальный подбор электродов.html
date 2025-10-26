@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Виртуальный подбор электродов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        .tab-active {
+            background-color: #2563eb;
+            color: white;
+        }
+        .tab-inactive {
+            color: #374151;
+        }
+        .tab-inactive:hover {
+            background-color: #f3f4f6;
+        }
+        .electrode-card {
+            transition: all 0.3s ease;
+        }
+        .electrode-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <!-- Header -->
+    <header class="bg-white shadow-lg border-b border-gray-200">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <i class="fas fa-sparkles text-blue-600 text-2xl"></i>
+                    <h1 class="text-2xl font-bold text-gray-800">Виртуальный подбор электродов</h1>
+                </div>
+                <div class="flex space-x-2 md:space-x-4">
+                    <button 
+                        id="calculatorTab"
+                        class="px-4 py-2 rounded-lg font-medium transition-colors tab-active"
+                    >
+                        Калькулятор
+                    </button>
+                    <button 
+                        id="databaseTab"
+                        class="px-4 py-2 rounded-lg font-medium transition-colors tab-inactive"
+                    >
+                        База данных
+                    </button>
+                    <button 
+                        id="guideTab"
+                        class="px-4 py-2 rounded-lg font-medium transition-colors tab-inactive"
+                    >
+                        Руководство
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Calculator Tab -->
+        <div id="calculatorContent" class="content-tab">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Input Form -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-semibold mb-6 flex items-center">
+                            <i class="fas fa-cog text-blue-600 mr-2"></i>
+                            Параметры сварки
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Материал</label>
+                                <select 
+                                    id="materialSelect"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Выберите материал</option>
+                                    <option value="Сталь 20">Сталь 20</option>
+                                    <option value="Сталь 30ХГСА">Сталь 30ХГСА</option>
+                                    <option value="Сталь 09Г2С">Сталь 09Г2С</option>
+                                    <option value="Нержавеющая сталь 12Х18Н10Т">Нержавеющая сталь 12Х18Н10Т</option>
+                                    <option value="Алюминий АД1">Алюминий АД1</option>
+                                    <option value="Медь М1">Медь М1</option>
+                                    <option value="Чугун СЧ20">Чугун СЧ20</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Толщина металла (мм)</label>
+                                <input 
+                                    type="number" 
+                                    id="thicknessInput"
+                                    placeholder="Например: 3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Тип соединения</label>
+                                <select 
+                                    id="jointTypeSelect"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Выберите тип соединения</option>
+                                    <option value="Стыковое соединение">Стыковое соединение</option>
+                                    <option value="Угловое соединение">Угловое соединение</option>
+                                    <option value="Тавровое соединение">Тавровое соединение</option>
+                                    <option value="Нахлесточное соединение">Нахлесточное соединение</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Положение сварки</label>
+                                <select 
+                                    id="positionSelect"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Выберите положение</option>
+                                    <option value="Нижнее положение">Нижнее положение (1G/1F)</option>
+                                    <option value="Вертикальное положение">Вертикальное положение (2G/2F)</option>
+                                    <option value="Горизонтальное положение">Горизонтальное положение (3G/3F)</option>
+                                    <option value="Потолочное положение">Потолочное положение (4G/4F)</option>
+                                </select>
+                            </div>
+                            
+                            <button 
+                                id="searchButton"
+                                class="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors bg-blue-600 hover:bg-blue-700"
+                            >
+                                <div class="flex items-center justify-center">
+                                    <i class="fas fa-search mr-2"></i>
+                                    Подобрать электроды
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Tips -->
+                    <div class="mt-6 bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            Советы
+                        </h3>
+                        <ul class="space-y-3 text-sm text-gray-700">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-2"></i>
+                                Для тонких листов используйте электроды меньшего диаметра
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-2"></i>
+                                При потолочной сварке выбирайте электроды с хорошим формированием шва
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 mr-2"></i>
+                                Не превышайте рекомендованный ток для предотвращения прожогов
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Results -->
+                <div class="lg:col-span-2">
+                    <div id="resultsContainer" class="hidden bg-white rounded-xl shadow-md p-6">
+                        <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold flex items-center mb-4 md:mb-0">
+                                <i class="fas fa-tools text-blue-600 mr-2"></i>
+                                Результаты подбора
+                            </h2>
+                            <div class="relative w-full md:w-auto">
+                                <input 
+                                    type="text" 
+                                    id="resultsSearch"
+                                    placeholder="Поиск по результатам..."
+                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                                >
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div id="noResultsMessage" class="text-center py-12 hidden">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mx-auto mb-4"></i>
+                            <p class="text-lg text-gray-700 mb-2">Не найдено подходящих электродов</p>
+                            <p class="text-sm text-gray-500">Попробуйте изменить параметры или проверьте правильность ввода</p>
+                        </div>
+                        
+                        <div id="resultsList" class="space-y-4">
+                            <!-- Results will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div id="selectedElectrodeContainer" class="mt-6 bg-white rounded-xl shadow-md p-6 hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                Выбранный электрод
+                            </h3>
+                            <button 
+                                id="closeSelectedButton"
+                                class="text-sm text-gray-500 hover:text-gray-700"
+                            >
+                                Закрыть
+                            </button>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 id="selectedName" class="font-bold text-xl mb-2"></h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Диаметр:</span>
+                                        <span id="selectedDiameter"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Ток:</span>
+                                        <span id="selectedCurrent"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Положение:</span>
+                                        <span id="selectedPosition"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Цена:</span>
+                                        <span id="selectedPrice"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-medium mb-2">Применение:</h4>
+                                <p id="selectedApplication" class="text-sm mb-4"></p>
+                                <h4 class="font-medium mb-2">Особенности:</h4>
+                                <ul id="selectedFeatures" class="text-sm space-y-1">
+                                    <!-- Features will be inserted here by JavaScript -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Tab -->
+        <div id="databaseContent" class="content-tab hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-book-open text-blue-600 mr-2"></i>
+                    База данных электродов
+                </h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="electrodesGrid">
+                    <!-- Electrode cards will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Guide Tab -->
+        <div id="guideContent" class="content-tab hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-book-open text-blue-600 mr-2"></i>
+                    Руководство по выбору электродов
+                </h2>
+                
+                <div class="prose max-w-none">
+                    <h3 class="text-lg font-semibold mb-4">Основные принципы выбора электродов</h3>
+                    <ol class="list-decimal pl-6 space-y-3 mb-6">
+                        <li><strong>Соответствие материала</strong> - Электрод должен соответствовать основному металлу по химическому составу и механическим свойствам.</li>
+                        <li><strong>Толщина металла</strong> - Для тонких листов используются электроды меньшего диаметра, для толстых - большего.</li>
+                        <li><strong>Положение сварки</strong> - Некоторые электроды лучше работают в определенных положениях (нижнее, вертикальное, потолочное).</li>
+                        <li><strong>Требования к шву</strong> - Учитывайте необходимую прочность, пластичность, коррозионную стойкость и другие свойства шва.</li>
+                        <li><strong>Условия эксплуатации</strong> - Для работы в условиях низких температур, агрессивных сред или при повышенных нагрузках требуются специальные электроды.</li>
+                    </ol>
+                    
+                    <h3 class="text-lg font-semibold mb-4">Рекомендации по сварке различных материалов</h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold mb-2">Углеродистые стали</h4>
+                            <ul class="list-disc pl-5 space-y-1 text-sm">
+                                <li>АНЖ-1 - универсальный электрод для ответственных конструкций</li>
+                                <li>УОНИ-13/55 - для конструкций, работающих при низких температурах</li>
+                                <li>МР-3 - для неответственных конструкций, прост в работе</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4">
+                            <h4 class="font-semibold mb-2">Нержавеющие стали</h4>
+                            <ul class="list-disc pl-5 space-y-1 text-sm">
+                                <li>ЦЛ-11 - для пищевого оборудования, хорошая коррозионная стойкость</li>
+                                <li>ОЗЛ-6 - для высокотемпературных установок, жаростойкий</li>
+                                <li>ЦТ-15 - для тонкостенных конструкций, минимальная деформация</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold mb-4">Советы профессионалов</h3>
+                    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                        <ul class="list-disc pl-5 space-y-2 text-sm">
+                            <li>Перед сваркой всегда очищайте поверхность от ржавчины, масла и других загрязнений</li>
+                            <li>Правильно выбирайте силу тока - слишком малый ток приводит к непроварам, слишком большой - к прожогам</li>
+                            <li>Для ответственных конструкций используйте электроды с качественной обмазкой</li>
+                            <li>При сварке в потолочном положении используйте электроды с хорошим формированием шва</li>
+                            <li>Храните электроды в сухом месте, перед использованием просушивайте согласно инструкции</li>
+                        </ul>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold mb-4">Таблица соответствия</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border p-2 text-left">Материал</th>
+                                    <th class="border p-2 text-left">Электрод</th>
+                                    <th class="border p-2 text-left">Диаметр</th>
+                                    <th class="border p-2 text-left">Ток</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="border p-2">Сталь 20</td>
+                                    <td class="border p-2">АНЖ-1</td>
+                                    <td class="border p-2">2.5-4.0 мм</td>
+                                    <td class="border p-2">60-160 А</td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2">Нержавеющая сталь</td>
+                                    <td class="border p-2">ЦЛ-11</td>
+                                    <td class="border p-2">2.5-3.2 мм</td>
+                                    <td class="border p-2">60-140 А</td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2">Алюминий</td>
+                                    <td class="border p-2">ОЗС-12</td>
+                                    <td class="border p-2">3.0-4.0 мм</td>
+                                    <td class="border p-2">80-160 А</td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2">Чугун</td>
+                                    <td class="border p-2">ОЗЧ-2</td>
+                                    <td class="border p-2">4.0-5.0 мм</td>
+                                    <td class="border p-2">120-200 А</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <i class="fas fa-sparkles text-blue-400 text-xl"></i>
+                    <span class="text-lg font-semibold">Виртуальный подбор электродов</span>
+                </div>
+                <div class="text-sm text-gray-400">
+                    © 2024 Все права защищены. Разработано для профессиональных сварщиков.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Electrode database
+        const electrodes = [
+            {
+                id: 1,
+                name: 'АНЖ-1',
+                material: 'углеродистая',
+                diameter: '2.5 мм',
+                currentRange: '60-90 А',
+                position: '1G/1F, 2G/2F, 3G/3F, 4G/4F',
+                application: 'Сталь 20, Сталь 30ХГСА, Сталь 09Г2С',
+                features: ['Высокая прочность шва', 'Отличная стойкость к трещинам', 'Подходит для ответственных конструкций'],
+                price: '120 руб./шт'
+            },
+            {
+                id: 2,
+                name: 'УОНИ-13/55',
+                material: 'углеродистая',
+                diameter: '3.0 мм',
+                currentRange: '90-120 А',
+                position: '1G/1F, 2G/2F, 3G/3F',
+                application: 'Сталь 20, Сталь 09Г2С',
+                features: ['Высокая пластичность', 'Отличная ударная вязкость', 'Подходит для холодного климата'],
+                price: '150 руб./шт'
+            },
+            {
+                id: 3,
+                name: 'ЦЛ-11',
+                material: 'нержавеющая',
+                diameter: '2.5 мм',
+                currentRange: '60-90 А',
+                position: '1G/1F, 2G/2F',
+                application: 'Нержавеющая сталь 12Х18Н10Т',
+                features: ['Высокая коррозионная стойкость', 'Отличная пластичность', 'Подходит для пищевого оборудования'],
+                price: '220 руб./шт'
+            },
+            {
+                id: 4,
+                name: 'ОЗЛ-6',
+                material: 'нержавеющая',
+                diameter: '3.2 мм',
+                currentRange: '100-140 А',
+                position: '1G/1F, 2G/2F, 3G/3F',
+                application: 'Нержавеющая сталь 12Х18Н10Т',
+                features: ['Высокая жаростойкость', 'Отличная стойкость к межкристаллитной коррозии', 'Подходит для высокотемпературных установок'],
+                price: '250 руб./шт'
+            },
+            {
+                id: 5,
+                name: 'ОЗС-12',
+                material: 'цветной металл',
+                diameter: '3.0 мм',
+                currentRange: '80-110 А',
+                position: '1G/1F, 2G/2F',
+                application: 'Алюминий АД1, Медь М1',
+                features: ['Отличная адгезия к цветным металлам', 'Минимальная пористость шва', 'Подходит для ремонта алюминиевых конструкций'],
+                price: '180 руб./шт'
+            },
+            {
+                id: 6,
+                name: 'ОЗЧ-2',
+                material: 'чугун',
+                diameter: '4.0 мм',
+                currentRange: '120-160 А',
+                position: '1G/1F, 2G/2F',
+                application: 'Чугун СЧ20',
+                features: ['Минимальная усадка шва', 'Отсутствие трещин при охлаждении', 'Подходит для ремонта чугунных деталей'],
+                price: '200 руб./шт'
+            }
+        ];
+
+        // Material types mapping
+        const materialTypes = {
+            'Сталь 20': 'углеродистая',
+            'Сталь 30ХГСА': 'легированная',
+            'Сталь 09Г2С': 'низколегированная',
+            'Нержавеющая сталь 12Х18Н10Т': 'нержавеющая',
+            'Алюминий АД1': 'цветной металл',
+            'Медь М1': 'цветной металл',
+            'Чугун СЧ20': 'чугун'
+        };
+
+        // DOM Elements
+        const calculatorTab = document.getElementById('calculatorTab');
+        const databaseTab = document.getElementById('databaseTab');
+        const guideTab = document.getElementById('guideTab');
+        const calculatorContent = document.getElementById('calculatorContent');
+        const databaseContent = document.getElementById('databaseContent');
+        const guideContent = document.getElementById('guideContent');
+        const searchButton = document.getElementById('searchButton');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const resultsList = document.getElementById('resultsList');
+        const resultsSearch = document.getElementById('resultsSearch');
+        const electrodesGrid = document.getElementById('electrodesGrid');
+        const selectedElectrodeContainer = document.getElementById('selectedElectrodeContainer');
+        const closeSelectedButton = document.getElementById('closeSelectedButton');
+
+        // Tab switching
+        calculatorTab.addEventListener('click', () => switchTab('calculator'));
+        databaseTab.addEventListener('click', () => switchTab('database'));
+        guideTab.addEventListener('click', () => switchTab('guide'));
+
+        function switchTab(tabName) {
+            // Hide all content
+            calculatorContent.classList.add('hidden');
+            databaseContent.classList.add('hidden');
+            guideContent.classList.add('hidden');
+            
+            // Remove active class from all tabs
+            calculatorTab.classList.remove('tab-active');
+            databaseTab.classList.remove('tab-active');
+            guideTab.classList.remove('tab-active');
+            calculatorTab.classList.add('tab-inactive');
+            databaseTab.classList.add('tab-inactive');
+            guideTab.classList.add('tab-inactive');
+            
+            // Show selected content and set active tab
+            if (tabName === 'calculator') {
+                calculatorContent.classList.remove('hidden');
+                calculatorTab.classList.remove('tab-inactive');
+                calculatorTab.classList.add('tab-active');
+            } else if (tabName === 'database') {
+                databaseContent.classList.remove('hidden');
+                databaseTab.classList.remove('tab-inactive');
+                databaseTab.classList.add('tab-active');
+                populateElectrodesGrid();
+            } else if (tabName === 'guide') {
+                guideContent.classList.remove('hidden');
+                guideTab.classList.remove('tab-inactive');
+                guideTab.classList.add('tab-active');
+            }
+        }
+
+        // Search functionality
+        searchButton.addEventListener('click', performSearch);
+
+        function performSearch() {
+            const material = document.getElementById('materialSelect').value;
+            const thickness = document.getElementById('thicknessInput').value;
+            const jointType = document.getElementById('jointTypeSelect').value;
+            const position = document.getElementById('positionSelect').value;
+            
+            if (!material || !thickness || !jointType || !position) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            // Show loading state
+            searchButton.innerHTML = '<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Подбираем...</div>';
+            searchButton.disabled = true;
+            
+            setTimeout(() => {
+                const materialType = materialTypes[material];
+                const filteredElectrodes = electrodes.filter(e => e.material === materialType);
+                
+                displayResults(filteredElectrodes);
+                
+                // Reset button
+                searchButton.innerHTML = '<div class="flex items-center justify-center"><i class="fas fa-search mr-2"></i>Подобрать электроды</div>';
+                searchButton.disabled = false;
+            }, 800);
+        }
+
+        function displayResults(electrodes) {
+            resultsContainer.classList.remove('hidden');
+            
+            if (electrodes.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+                resultsList.innerHTML = '';
+                return;
+            }
+            
+            noResultsMessage.classList.add('hidden');
+            
+            let resultsHTML = '';
+            electrodes.forEach((electrode, index) => {
+                const isExpanded = index === 0; // Expand first result by default
+                
+                resultsHTML += `
+                    <div class="electrode-card border rounded-lg p-4 cursor-pointer transition-all ${isExpanded ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}" 
+                         data-id="${electrode.id}" onclick="toggleResult(${electrode.id})">
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <div class="flex items-center space-x-3 mb-2 md:mb-0">
+                                <div class="h-3 w-3 rounded-full ${index % 2 === 0 ? 'bg-green-500' : 'bg-blue-500'}"></div>
+                                <h3 class="font-semibold text-lg">${electrode.name}</h3>
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${electrode.diameter}</span>
+                            </div>
+                            <div class="flex flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-4 text-sm text-gray-500">
+                                <span>Ток: ${electrode.currentRange}</span>
+                                <span>Позиция: ${electrode.position}</span>
+                            </div>
+                        </div>
+                        
+                        <div id="details-${electrode.id}" class="mt-4 pt-4 border-t border-gray-200 ${isExpanded ? '' : 'hidden'}">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="font-medium mb-2">Применение:</h4>
+                                    <p class="text-sm text-gray-700">${electrode.application}</p>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium mb-2">Особенности:</h4>
+                                    <ul class="text-sm text-gray-700 space-y-1">
+                                        ${electrode.features.map(feature => 
+                                            `<li class="flex items-start">
+                                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-2"></i>
+                                                ${feature}
+                                            </li>`
+                                        ).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col md:flex-row items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700 mb-2 md:mb-0">Цена: ${electrode.price}</span>
+                                <button 
+                                    onclick="event.stopPropagation(); selectElectrode(${electrode.id})"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                                >
+                                    Выбрать
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
+                            <span>Рекомендуется для: ${electrode.material}</span>
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'} text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsList.innerHTML = resultsHTML;
+            
+            // Set up search functionality
+            resultsSearch.addEventListener('input', filterResults);
+        }
+
+        function filterResults() {
+            const query = resultsSearch.value.toLowerCase();
+            const resultCards = document.querySelectorAll('.electrode-card');
+            
+            resultCards.forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                const application = card.querySelector('p').textContent.toLowerCase();
+                
+                if (name.includes(query) || application.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleResult(id) {
+            const details = document.getElementById(`details-${id}`);
+            const card = document.querySelector(`[data-id="${id}"]`);
+            const chevron = card.querySelector('i.fa-chevron-up, i.fa-chevron-down');
+            
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                card.classList.add('border-blue-500', 'bg-blue-50');
+                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            } else {
+                details.classList.add('hidden');
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+            }
+        }
+
+        function selectElectrode(id) {
+            const electrode = electrodes.find(e => e.id === id);
+            if (!electrode) return;
+            
+            document.getElementById('selectedName').textContent = electrode.name;
+            document.getElementById('selectedDiameter').textContent = electrode.diameter;
+            document.getElementById('selectedCurrent').textContent = electrode.currentRange;
+            document.getElementById('selectedPosition').textContent = electrode.position;
+            document.getElementById('selectedPrice').textContent = electrode.price;
+            document.getElementById('selectedApplication').textContent = electrode.application;
+            
+            const featuresList = document.getElementById('selectedFeatures');
+            featuresList.innerHTML = electrode.features.map(feature => 
+                `<li class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-0.5 mr-2"></i>
+                    ${feature}
+                </li>`
+            ).join('');
+            
+            selectedElectrodeContainer.classList.remove('hidden');
+        }
+
+        closeSelectedButton.addEventListener('click', () => {
+            selectedElectrodeContainer.classList.add('hidden');
+        });
+
+        function populateElectrodesGrid() {
+            let gridHTML = '';
+            
+            electrodes.forEach(electrode => {
+                gridHTML += `
+                    <div class="electrode-card border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-lg">${electrode.name}</h3>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${electrode.diameter}</span>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Материал:</span>
+                                <span class="capitalize">${electrode.material}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Ток:</span>
+                                <span>${electrode.currentRange}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Положение:</span>
+                                <span>${electrode.position}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Цена:</span>
+                                <span>${electrode.price}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <h4 class="font-medium mb-1">Применение:</h4>
+                            <p class="text-xs text-gray-600">${electrode.application}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            electrodesGrid.innerHTML = gridHTML;
+        }
+
+        // Initialize the page
+        populateElectrodesGrid();
+    </script>
+</body>
+</html>

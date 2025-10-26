@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор подбора режимов резания</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Заголовок -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Симулятор подбора режимов резания</h1>
+            <p class="text-gray-600">Оптимальные параметры для вашей обработки</p>
+        </div>
+
+        <!-- Форма ввода параметров -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Параметры обработки</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Материал заготовки -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Материал заготовки</label>
+                    <select id="materialSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="steel">Сталь</option>
+                        <option value="stainless">Нержавеющая сталь</option>
+                        <option value="aluminum">Алюминий</option>
+                        <option value="castIron">Чугун</option>
+                        <option value="titanium">Титан</option>
+                    </select>
+                </div>
+
+                <!-- Инструмент -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Инструмент</label>
+                    <select id="toolSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="hss">Быстрорежущая сталь</option>
+                        <option value="carbide">Твердосплавный</option>
+                        <option value="ceramic">Керамический</option>
+                        <option value="cbn">Кубический нитрид бора</option>
+                    </select>
+                </div>
+
+                <!-- Диаметр инструмента -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Диаметр инструмента (мм)</label>
+                    <input 
+                        id="diameterInput"
+                        type="number" 
+                        value="20"
+                        min="1" 
+                        max="100" 
+                        step="0.1"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+
+                <!-- Глубина резания -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Глубина резания (мм)</label>
+                    <input 
+                        id="depthInput"
+                        type="number" 
+                        value="2"
+                        min="0.1" 
+                        max="10" 
+                        step="0.1"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+
+                <!-- Подача -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Подача (мм/об)</label>
+                    <input 
+                        id="feedInput"
+                        type="number" 
+                        value="0.2"
+                        min="0.05" 
+                        max="0.5" 
+                        step="0.01"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+            </div>
+
+            <!-- Кнопка расчета -->
+            <div class="mt-8 flex justify-center">
+                <button
+                    id="calculateBtn"
+                    class="px-8 py-3 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all"
+                >
+                    Рассчитать режимы резания
+                </button>
+            </div>
+        </div>
+
+        <!-- Результаты -->
+        <div id="resultsContainer" class="hidden bg-white rounded-xl shadow-lg p-6 animate-fadeIn">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Результаты расчета</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-blue-800 mb-2">Основные параметры</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Скорость резания:</span>
+                            <span id="cuttingSpeed" class="font-semibold">-- м/мин</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Частота вращения:</span>
+                            <span id="spindleSpeed" class="font-semibold">-- об/мин</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Подача:</span>
+                            <span id="feedResult" class="font-semibold">-- мм/об</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-green-800 mb-2">Энергетические характеристики</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Мощность резания:</span>
+                            <span id="power" class="font-semibold">-- кВт</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Сила резания:</span>
+                            <span id="cuttingForce" class="font-semibold">-- Н</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Материал:</span>
+                            <span id="materialName" class="font-semibold">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Инструмент:</span>
+                            <span id="toolName" class="font-semibold">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Рекомендации -->
+            <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                <h3 class="text-lg font-medium text-yellow-800 mb-2">Рекомендации</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                    <li>При увеличении глубины резания снижайте подачу на 10-15%</li>
+                    <li>Для твердосплавных инструментов можно увеличить скорость резания на 20-30%</li>
+                    <li>При работе с алюминием используйте более высокие скорости резания</li>
+                    <li>Контролируйте температуру инструмента - перегрев снижает его стойкость</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Информационная панель -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Как пользоваться симулятором</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-blue-800 mb-2">Шаг 1</h3>
+                    <p class="text-gray-700">Выберите материал заготовки и тип инструмента из выпадающих списков.</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-green-800 mb-2">Шаг 2</h3>
+                    <p class="text-gray-700">Укажите диаметр инструмента, глубину резания и подачу.</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-purple-800 mb-2">Шаг 3</h3>
+                    <p class="text-gray-700">Нажмите "Рассчитать" и получите оптимальные режимы резания.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Материалы заготовки
+        const materials = {
+            steel: { name: 'Сталь', coefficient: 1.0 },
+            stainless: { name: 'Нержавеющая сталь', coefficient: 0.8 },
+            aluminum: { name: 'Алюминий', coefficient: 1.5 },
+            castIron: { name: 'Чугун', coefficient: 0.9 },
+            titanium: { name: 'Титан', coefficient: 0.6 }
+        };
+
+        // Инструменты
+        const tools = {
+            hss: { name: 'Быстрорежущая сталь', coefficient: 1.0 },
+            carbide: { name: 'Твердосплавный', coefficient: 1.8 },
+            ceramic: { name: 'Керамический', coefficient: 2.5 },
+            cbn: { name: 'Кубический нитрид бора', coefficient: 3.0 }
+        };
+
+        // Элементы DOM
+        const materialSelect = document.getElementById('materialSelect');
+        const toolSelect = document.getElementById('toolSelect');
+        const diameterInput = document.getElementById('diameterInput');
+        const depthInput = document.getElementById('depthInput');
+        const feedInput = document.getElementById('feedInput');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        // Элементы результатов
+        const cuttingSpeedEl = document.getElementById('cuttingSpeed');
+        const spindleSpeedEl = document.getElementById('spindleSpeed');
+        const feedResultEl = document.getElementById('feedResult');
+        const powerEl = document.getElementById('power');
+        const cuttingForceEl = document.getElementById('cuttingForce');
+        const materialNameEl = document.getElementById('materialName');
+        const toolNameEl = document.getElementById('toolName');
+
+        // Расчет режимов резания
+        function calculateCuttingParameters() {
+            const selectedMaterial = materialSelect.value;
+            const selectedTool = toolSelect.value;
+            const diameter = parseFloat(diameterInput.value);
+            const depth = parseFloat(depthInput.value);
+            const feed = parseFloat(feedInput.value);
+
+            // Показываем индикатор загрузки
+            calculateBtn.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.644z"></path>
+                    </svg>
+                    Рассчитываем...
+                </div>
+            `;
+            calculateBtn.disabled = true;
+            calculateBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            calculateBtn.classList.add('bg-blue-400', 'cursor-not-allowed');
+
+            setTimeout(() => {
+                // Базовые значения для стали с быстрорежущей сталью
+                let baseSpeed = 30; // м/мин для стали и HSS
+                
+                // Корректировка скорости резания
+                const materialCoefficient = materials[selectedMaterial].coefficient;
+                const toolCoefficient = tools[selectedTool].coefficient;
+                
+                let cuttingSpeed = baseSpeed * materialCoefficient * toolCoefficient;
+                
+                // Учет диаметра инструмента (чем больше диаметр, тем меньше скорость)
+                cuttingSpeed = cuttingSpeed * (20 / diameter);
+                
+                // Расчет частоты вращения шпинделя
+                const spindleSpeed = Math.round((1000 * cuttingSpeed) / (Math.PI * diameter));
+                
+                // Расчет подачи (корректируем в зависимости от глубины резания)
+                let calculatedFeed = feed * (2 / depth);
+                if (calculatedFeed > 0.5) calculatedFeed = 0.5;
+                if (calculatedFeed < 0.05) calculatedFeed = 0.05;
+                
+                // Расчет мощности резания (упрощенная формула)
+                const power = Math.round((cuttingSpeed * depth * calculatedFeed * 0.001) * 10) / 10;
+                
+                // Расчет силы резания
+                const cuttingForce = Math.round((depth * calculatedFeed * 100) / (cuttingSpeed / 10));
+                
+                // Обновляем результаты
+                cuttingSpeedEl.textContent = Math.round(cuttingSpeed) + ' м/мин';
+                spindleSpeedEl.textContent = spindleSpeed + ' об/мин';
+                feedResultEl.textContent = calculatedFeed.toFixed(2) + ' мм/об';
+                powerEl.textContent = power + ' кВт';
+                cuttingForceEl.textContent = cuttingForce + ' Н';
+                materialNameEl.textContent = materials[selectedMaterial].name;
+                toolNameEl.textContent = tools[selectedTool].name;
+                
+                // Показываем результаты
+                resultsContainer.classList.remove('hidden');
+                resultsContainer.classList.add('animate-fadeIn');
+                
+                // Восстанавливаем кнопку
+                calculateBtn.innerHTML = 'Рассчитать режимы резания';
+                calculateBtn.disabled = false;
+                calculateBtn.classList.remove('bg-blue-400', 'cursor-not-allowed');
+                calculateBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 800);
+        }
+
+        // Сброс результатов при изменении параметров
+        function resetResults() {
+            resultsContainer.classList.add('hidden');
+        }
+
+        // Назначение обработчиков событий
+        calculateBtn.addEventListener('click', calculateCuttingParameters);
+        materialSelect.addEventListener('change', resetResults);
+        toolSelect.addEventListener('change', resetResults);
+        diameterInput.addEventListener('input', resetResults);
+        depthInput.addEventListener('input', resetResults);
+        feedInput.addEventListener('input', resetResults);
+    </script>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Симулятор расчета припусков на обработку</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .simulator {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+        }
+        .visualization {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #e74c3c;
+            position: relative;
+        }
+        .param-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .value-display {
+            min-width: 80px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            background: #e8f4fc;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+        .result {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .calculation-result {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #27ae60;
+        }
+        .details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .detail-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .detail-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+            margin: 5px 0;
+        }
+        .workpiece {
+            width: 300px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .material-layer {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px dashed;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .rough-layer {
+            background: rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+        .finish-layer {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+        }
+        .final-part {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid #2ecc71;
+        }
+        .dimension-line {
+            position: absolute;
+            background: #2c3e50;
+            font-size: 12px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .dimension-line.horizontal {
+            width: 2px;
+            height: 30px;
+        }
+        .dimension-line.vertical {
+            width: 30px;
+            height: 2px;
+        }
+        .dimension-label {
+            position: absolute;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #bdc3c7;
+        }
+        .funny-comment {
+            font-size: 18px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #f39c12;
+        }
+        .emoji {
+            font-size: 24px;
+            margin: 0 5px;
+        }
+        .recommendations {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        .recommendations h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        .recommendations li {
+            padding: 5px 0;
+            color: #856404;
+        }
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            .details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator">
+        <div class="header">
+            <h1>⚙️ СИМУЛЯТОР РАСЧЕТА ПРИПУСКОВ НА ОБРАБОТКУ</h1>
+            <div class="subtitle">Рассчитайте оптимальные припуски для токарной и фрезерной обработки</div>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="param-group">
+                    <label>📏 Исходный размер заготовки: <span id="initialSizeValue" class="value-display">100 мм</span></label>
+                    <div class="slider-container">
+                        <span>50 мм</span>
+                        <input type="range" min="50" max="500" value="100" class="slider" id="initialSizeSlider">
+                        <span>500 мм</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>🎯 Конечный размер детали: <span id="finalSizeValue" class="value-display">187 мм</span></label>
+                    <div class="slider-container">
+                        <span>40 мм</span>
+                        <input type="range" min="40" max="450" value="187" class="slider" id="finalSizeSlider">
+                        <span>450 мм</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>🔧 Материал заготовки:</label>
+                    <select id="materialSelect">
+                        <option value="steel">Сталь конструкционная</option>
+                        <option value="stainless">Нержавеющая сталь</option>
+                        <option value="aluminum">Алюминий и сплавы</option>
+                        <option value="copper">Медь и бронза</option>
+                        <option value="castiron">Чугун</option>
+                        <option value="titanium">Титановые сплавы</option>
+                    </select>
+                </div>
+
+                <div class="param-group">
+                    <label>⚡ Тип обработки:</label>
+                    <select id="processSelect">
+                        <option value="turning">Токарная обработка</option>
+                        <option value="milling">Фрезерная обработка</option>
+                        <option value="grinding">Шлифование</option>
+                        <option value="drilling">Сверление/растачивание</option>
+                    </select>
+                </div>
+
+                <div class="param-group">
+                    <label>📊 Квалитет точности:</label>
+                    <select id="toleranceSelect">
+                        <option value="it7">IT7 (высокая точность)</option>
+                        <option value="it8">IT8</option>
+                        <option value="it9">IT9</option>
+                        <option value="it10">IT10 (средняя точность)</option>
+                        <option value="it11">IT11</option>
+                        <option value="it12">IT12 (грубая обработка)</option>
+                    </select>
+                </div>
+
+                <div class="param-group">
+                    <label>🔄 Количество переходов: <span id="passesValue" class="value-display">2</span></label>
+                    <div class="slider-container">
+                        <span>1</span>
+                        <input type="range" min="1" max="5" value="2" class="slider" id="passesSlider">
+                        <span>5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <h3>👁️ ВИЗУАЛИЗАЦИЯ ПРИПУСКОВ</h3>
+                <div class="workpiece" id="workpiece">
+                    <!-- Визуализация будет создаваться JavaScript -->
+                </div>
+                <div class="funny-comment" id="funnyComment">
+                    Настройте параметры для расчета припусков! 🔧
+                </div>
+                
+                <div class="recommendations">
+                    <h3>💡 РЕКОМЕНДАЦИИ</h3>
+                    <ul id="recommendationsList">
+                        <li>• Установите размеры заготовки и детали</li>
+                        <li>• Выберите материал и тип обработки</li>
+                        <li>• Система рассчитает оптимальные припуски</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="result">
+            <h2>📈 РЕЗУЛЬТАТЫ РАСЧЕТА</h2>
+            <div class="calculation-result" id="totalAllowance">
+                Общий припуск: -- мм
+            </div>
+            <div class="details">
+                <div class="detail-item">
+                    <div>На сторону</div>
+                    <div class="detail-value" id="perSideAllowance">-- мм</div>
+                    <div>📏</div>
+                </div>
+                <div class="detail-item">
+                    <div>Черновой припуск</div>
+                    <div class="detail-value" id="roughAllowance">-- мм</div>
+                    <div>⚡</div>
+                </div>
+                <div class="detail-item">
+                    <div>Чистовой припуск</div>
+                    <div class="detail-value" id="finishAllowance">-- мм</div>
+                    <div>🎯</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Коэффициенты припусков для разных материалов и процессов
+        const allowanceCoefficients = {
+            steel: { turning: 1.2, milling: 1.4, grinding: 0.3, drilling: 1.1 },
+            stainless: { turning: 1.3, milling: 1.5, grinding: 0.4, drilling: 1.2 },
+            aluminum: { turning: 1.1, milling: 1.3, grinding: 0.2, drilling: 1.0 },
+            copper: { turning: 1.0, milling: 1.2, grinding: 0.2, drilling: 0.9 },
+            castiron: { turning: 1.4, milling: 1.6, grinding: 0.5, drilling: 1.3 },
+            titanium: { turning: 1.5, milling: 1.7, grinding: 0.6, drilling: 1.4 }
+        };
+
+        // Точность обработки по квалитетам (мм)
+        const toleranceValues = {
+            it7: 0.03, it8: 0.05, it9: 0.08, it10: 0.12, it11: 0.20, it12: 0.35
+        };
+
+        // Получаем элементы DOM
+        const initialSizeSlider = document.getElementById('initialSizeSlider');
+        const finalSizeSlider = document.getElementById('finalSizeSlider');
+        const passesSlider = document.getElementById('passesSlider');
+        const materialSelect = document.getElementById('materialSelect');
+        const processSelect = document.getElementById('processSelect');
+        const toleranceSelect = document.getElementById('toleranceSelect');
+
+        const initialSizeValue = document.getElementById('initialSizeValue');
+        const finalSizeValue = document.getElementById('finalSizeValue');
+        const passesValue = document.getElementById('passesValue');
+
+        const totalAllowance = document.getElementById('totalAllowance');
+        const perSideAllowance = document.getElementById('perSideAllowance');
+        const roughAllowance = document.getElementById('roughAllowance');
+        const finishAllowance = document.getElementById('finishAllowance');
+        const funnyComment = document.getElementById('funnyComment');
+        const recommendationsList = document.getElementById('recommendationsList');
+        const workpiece = document.getElementById('workpiece');
+
+        // Функция расчета припусков
+        function calculateAllowances() {
+            const initialSize = parseFloat(initialSizeSlider.value);
+            const finalSize = parseFloat(finalSizeSlider.value);
+            const passes = parseInt(passesSlider.value);
+            const material = materialSelect.value;
+            const process = processSelect.value;
+            const tolerance = toleranceSelect.value;
+
+            // Проверка корректности размеров
+            if (finalSize > initialSize) {
+                funnyComment.innerHTML = `Ошибка! <span class="emoji">⚠️</span> Конечный размер не может быть больше исходного!`;
+                totalAllowance.textContent = `Общий припуск: -- мм`;
+                perSideAllowance.textContent = `-- мм`;
+                roughAllowance.textContent = `-- мм`;
+                finishAllowance.textContent = `-- мм`;
+                recommendationsList.innerHTML = `
+                    <li>• Конечный размер должен быть меньше исходного</li>
+                    <li>• Проверьте введенные значения</li>
+                `;
+                updateVisualization(initialSize, initialSize, 0);
+                return;
+            }
+
+            // Основной расчет
+            const totalAllowanceValue = initialSize - finalSize;
+            const perSideValue = totalAllowanceValue / 2;
+            
+            // Расчет с учетом коэффициентов
+            const coefficient = allowanceCoefficients[material][process];
+            const toleranceValue = toleranceValues[tolerance];
+            
+            const adjustedTotal = totalAllowanceValue * coefficient + toleranceValue;
+            const adjustedPerSide = adjustedTotal / 2;
+            
+            // Распределение по переходам
+            const roughPercentage = 0.7; // 70% на черновую обработку
+            const finishPercentage = 0.3; // 30% на чистовую
+            
+            const roughValue = adjustedPerSide * roughPercentage;
+            const finishValue = adjustedPerSide * finishPercentage;
+
+            // Обновляем отображение
+            updateDisplay(adjustedTotal, adjustedPerSide, roughValue, finishValue);
+            updateVisualization(initialSize, finalSize, adjustedPerSide);
+            updateRecommendations(adjustedTotal, material, process);
+        }
+
+        // Обновление отображения результатов
+        function updateDisplay(total, perSide, rough, finish) {
+            totalAllowance.textContent = `Общий припуск: ${total.toFixed(2)} мм`;
+            perSideAllowance.textContent = `${perSide.toFixed(2)} мм`;
+            roughAllowance.textContent = `${rough.toFixed(2)} мм`;
+            finishAllowance.textContent = `${finish.toFixed(2)} мм`;
+
+            // Забавные комментарии
+            if (total < 1) {
+                funnyComment.innerHTML = `Тонкая работа! <span class="emoji">🎯</span> Почти ювелирная точность!`;
+            } else if (total < 5) {
+                funnyComment.innerHTML = `Отличные параметры! <span class="emoji">👍</span> Стабильная обработка гарантирована!`;
+            } else if (total < 15) {
+                funnyComment.innerHTML = `Солидный припуск! <span class="emoji">💪</span> Есть где разгуляться инструменту!`;
+            } else {
+                funnyComment.innerHTML = `Мощно! <span class="emoji">🔥</span> Настоящая промышленная обработка!`;
+            }
+        }
+
+        // Визуализация припусков
+        function updateVisualization(initialSize, finalSize, allowancePerSide) {
+            workpiece.innerHTML = '';
+            
+            const workpieceWidth = 280;
+            const workpieceHeight = 150;
+            
+            // Размеры в масштабе (максимальный размер заготовки = 500 мм)
+            const maxSize = 500;
+            const initialScaled = (initialSize / maxSize) * workpieceWidth;
+            const finalScaled = (finalSize / maxSize) * workpieceWidth;
+            const allowanceScaled = (allowancePerSide / maxSize) * workpieceWidth;
+            
+            // Позиционирование
+            const centerX = workpieceWidth / 2;
+            const centerY = workpieceHeight / 2;
+            
+            // Исходная заготовка
+            const roughLayer = document.createElement('div');
+            roughLayer.className = 'material-layer rough-layer';
+            roughLayer.style.width = initialScaled + 'px';
+            roughLayer.style.height = '120px';
+            roughLayer.title = `Исходная заготовка: ${initialSize} мм`;
+            
+            // Чистовая обработка
+            const finishLayer = document.createElement('div');
+            finishLayer.className = 'material-layer finish-layer';
+            finishLayer.style.width = (initialScaled - allowanceScaled * 2) + 'px';
+            finishLayer.style.height = '100px';
+            finishLayer.title = `После черновой обработки`;
+            
+            // Конечная деталь
+            const finalPart = document.createElement('div');
+            finalPart.className = 'material-layer final-part';
+            finalPart.style.width = finalScaled + 'px';
+            finalPart.style.height = '80px';
+            finalPart.title = `Готовая деталь: ${finalSize} мм`;
+            
+            workpiece.appendChild(roughLayer);
+            workpiece.appendChild(finishLayer);
+            workpiece.appendChild(finalPart);
+            
+            // Добавляем размерные линии
+            addDimensionLine(centerX - initialScaled/2, centerY - 70, centerX + initialScaled/2, centerY - 70, initialSize + ' мм', 'horizontal');
+            addDimensionLine(centerX - finalScaled/2, centerY + 70, centerX + finalScaled/2, centerY + 70, finalSize + ' мм', 'horizontal');
+            
+            // Линия припуска
+            if (allowancePerSide > 0) {
+                const allowanceLine = document.createElement('div');
+                allowanceLine.className = 'dimension-line vertical';
+                allowanceLine.style.left = (centerX + finalScaled/2 + 40) + 'px';
+                allowanceLine.style.top = (centerY - 40) + 'px';
+                allowanceLine.style.width = '2px';
+                allowanceLine.style.height = '80px';
+                workpiece.appendChild(allowanceLine);
+                
+                const allowanceLabel = document.createElement('div');
+                allowanceLabel.className = 'dimension-label';
+                allowanceLabel.textContent = `Припуск: ${(allowancePerSide * 2).toFixed(1)} мм`;
+                allowanceLabel.style.left = (centerX + finalScaled/2 + 45) + 'px';
+                allowanceLabel.style.top = (centerY) + 'px';
+                workpiece.appendChild(allowanceLabel);
+            }
+        }
+
+        // Добавление размерной линии
+        function addDimensionLine(x1, y1, x2, y2, label, orientation) {
+            const line = document.createElement('div');
+            line.className = `dimension-line ${orientation}`;
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            
+            if (orientation === 'horizontal') {
+                line.style.width = (x2 - x1) + 'px';
+                line.style.height = '2px';
+            } else {
+                line.style.width = '2px';
+                line.style.height = (y2 - y1) + 'px';
+            }
+            
+            workpiece.appendChild(line);
+            
+            const labelEl = document.createElement('div');
+            labelEl.className = 'dimension-label';
+            labelEl.textContent = label;
+            labelEl.style.left = (x1 + (x2 - x1)/2 - 20) + 'px';
+            labelEl.style.top = (y1 - 20) + 'px';
+            workpiece.appendChild(labelEl);
+        }
+
+        // Обновление рекомендаций
+        function updateRecommendations(totalAllowance, material, process) {
+            const recommendations = [];
+            
+            if (totalAllowance < 2) {
+                recommendations.push("• Рекомендуется использовать твердосплавный инструмент");
+                recommendations.push("• Контролировать температурный режим");
+                recommendations.push("• Применить СОЖ для улучшения качества");
+            } else if (totalAllowance > 10) {
+                recommendations.push("• Использовать мощное оборудование");
+                recommendations.push("• Разбить обработку на несколько этапов");
+                recommendations.push("• Контролировать остаточные напряжения");
+            }
+            
+            if (material === 'aluminum') {
+                recommendations.push("• Следить за налипанием стружки");
+                recommendations.push("• Использовать острый инструмент");
+            } else if (material === 'stainless') {
+                recommendations.push("• Применять износостойкий инструмент");
+                recommendations.push("• Контролировать работу наклепа");
+            }
+            
+            if (process === 'grinding') {
+                recommendations.push("• Контролировать зернистость круга");
+                recommendations.push("• Следить за правкой инструмента");
+            }
+            
+            recommendationsList.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
+        }
+
+        // Обработчики событий
+        initialSizeSlider.addEventListener('input', function() {
+            initialSizeValue.textContent = this.value + ' мм';
+            // Автоматическая настройка конечного размера
+            const minFinal = Math.max(40, this.value - 50);
+            finalSizeSlider.min = minFinal;
+            if (parseFloat(finalSizeSlider.value) > this.value - 5) {
+                finalSizeSlider.value = this.value - 10;
+                finalSizeValue.textContent = finalSizeSlider.value + ' мм';
+            }
+            calculateAllowances();
+        });
+
+        finalSizeSlider.addEventListener('input', function() {
+            finalSizeValue.textContent = this.value + ' мм';
+            calculateAllowances();
+        });
+
+        passesSlider.addEventListener('input', function() {
+            passesValue.textContent = this.value;
+            calculateAllowances();
+        });
+
+        materialSelect.addEventListener('change', calculateAllowances);
+        processSelect.addEventListener('change', calculateAllowances);
+        toleranceSelect.addEventListener('change', calculateAllowances);
+
+        // Первоначальный расчет
+        calculateAllowances();
+    </script>
+</body>
+</html>

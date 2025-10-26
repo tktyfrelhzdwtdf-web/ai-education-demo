@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер маркировки электродов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            color: #4a2c8c; /* Темно-фиолетовый цвет */
+        }
+        
+        .logo p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .menu {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .menu-btn {
+            background: white;
+            border: none;
+            padding: 25px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background: #f8f9fa;
+        }
+        
+        .menu-btn.learning { background: #4CAF50; color: white; }
+        .menu-btn.practice { background: #2196F3; color: white; }
+        .menu-btn.reference { background: #FF9800; color: white; }
+        
+        .screen {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .screen h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #4a5568;
+            font-size: 2rem;
+        }
+        
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #5a67d8;
+        }
+        
+        /* Обучение */
+        .learning-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .electrode-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease;
+        }
+        
+        .electrode-card:hover {
+            transform: scale(1.02);
+            border-color: #cbd5e0;
+        }
+        
+        .electrode-mark {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .decoding {
+            margin: 15px 0;
+        }
+        
+        .decoding-item {
+            display: flex;
+            margin: 8px 0;
+            padding: 8px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+        
+        .decoding-item strong {
+            min-width: 30px;
+            color: #4a5568;
+        }
+        
+        .application {
+            margin-top: 15px;
+            padding: 12px;
+            background: #ebf8ff;
+            border-radius: 8px;
+            font-style: italic;
+        }
+        
+        /* Практика */
+        .question {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .options {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .option {
+            padding: 15px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .option:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+        
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .option.correct {
+            background: #48bb78;
+            color: white;
+            border-color: #48bb78;
+        }
+        
+        .option.incorrect {
+            background: #f56565;
+            color: white;
+            border-color: #f56565;
+        }
+        
+        .submit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .submit-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            text-align: center;
+            font-size: 1.3rem;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            .logo h1 {
+                font-size: 2rem;
+            }
+            
+            .menu-btn {
+                padding: 20px;
+                font-size: 1.2rem;
+            }
+            
+            .screen {
+                padding: 20px;
+            }
+            
+            .electrode-mark {
+                font-size: 1.5rem;
+            }
+            
+            .question {
+                font-size: 1.2rem;
+                min-height: 60px;
+            }
+            
+            .option {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Главный экран -->
+        <div id="main-screen" class="screen active">
+            <div class="logo">
+                <h1>⚡ Тренажер маркировки электродов</h1>
+                <p>Обучение по ГОСТ для начинающих сварщиков</p>
+            </div>
+            <div class="menu">
+                <button class="menu-btn learning" onclick="showScreen('learning')">
+                    📚 ОБУЧЕНИЕ
+                </button>
+                <button class="menu-btn practice" onclick="showScreen('practice')">
+                    🎯 ПРАКТИКА
+                </button>
+                <button class="menu-btn reference" onclick="showScreen('reference')">
+                    📖 СПРАВОЧНИК
+                </button>
+            </div>
+        </div>
+
+        <!-- Режим обучения -->
+        <div id="learning-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('main')">← Назад</button>
+            <h2>📚 Режим обучения</h2>
+            <div class="learning-content" id="learning-content">
+                <!-- Карточки будут добавлены через JavaScript -->
+            </div>
+        </div>
+
+        <!-- Режим практики -->
+        <div id="practice-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('main')">← Назад</button>
+            <h2>🎯 Режим практики</h2>
+            <div class="progress" id="progress">Вопрос 1 из 5</div>
+            <div class="question" id="question"></div>
+            <div class="options" id="options"></div>
+            <button class="submit-btn" id="submit-btn" onclick="checkAnswer()">Проверить ответ</button>
+            <div class="result" id="result"></div>
+        </div>
+
+        <!-- Справочник -->
+        <div id="reference-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('main')">← Назад</button>
+            <h2>📖 Справочник</h2>
+            <div class="reference-content">
+                <h3>Основные принципы маркировки электродов по ГОСТ:</h3>
+                <p><strong>Первые буквы</strong> - тип покрытия и назначение:</p>
+                <p>• У - для углеродистых и низколегированных сталей</p>
+                <p>• Л - для легированных сталей</p>
+                <p>• Т - для теплоустойчивых сталей</p>
+                <p>• В - для высоколегированных сталей</p>
+                <p>• Н - для наплавки</p>
+                
+                <h3>Типы покрытий:</h3>
+                <p>• А - кислое покрытие</p>
+                <p>• Б - основное покрытие</p>
+                <p>• Ц - целлюлозное покрытие</p>
+                <p>• Р - рутиловое покрытие</p>
+                <p>• Ж - железистое покрытие</p>
+                
+                <h3>Цифры в маркировке:</h3>
+                <p>• Первые цифры - номер разработки</p>
+                <p>• Последние цифры - предел прочности в кгс/мм²</p>
+                
+                <h3>Примеры расшифровки:</h3>
+                <p><strong>УОНИ-13/55</strong> - Углеродистые стали, Основное покрытие, Номер 13, Прочность 55 кгс/мм²</p>
+                <p><strong>МР-3</strong> - Малогазообразующее рутиловое покрытие, номер 3</p>
+                <p><strong>ЦЛ-11</strong> - Целлюлозное покрытие, Легированные стали, номер 11</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные для обучения
+        const electrodeData = [
+            {
+                mark: "УОНИ-13/55",
+                decoding: [
+                    {part: "У", meaning: "для углеродистых сталей"},
+                    {part: "ОНИ", meaning: "основное покрытие"},
+                    {part: "13", meaning: "номер разработки"},
+                    {part: "55", meaning: "прочность 55 кгс/мм²"}
+                ],
+                application: "Ответственные конструкции, работающие при отрицательных температурах"
+            },
+            {
+                mark: "АНО-21",
+                decoding: [
+                    {part: "А", meaning: "кислое покрытие"},
+                    {part: "Н", meaning: "для низколегированных сталей"},
+                    {part: "О", meaning: "особого назначения"},
+                    {part: "21", meaning: "номер разработки"}
+                ],
+                application: "Сварка тонкостенных конструкций, монтажные работы"
+            },
+            {
+                mark: "МР-3",
+                decoding: [
+                    {part: "М", meaning: "малогазообразующее"},
+                    {part: "Р", meaning: "рутиловое покрытие"},
+                    {part: "3", meaning: "номер разработки"}
+                ],
+                application: "Универсальный электрод для сварки в различных положениях"
+            },
+            {
+                mark: "ОЗС-12",
+                decoding: [
+                    {part: "О", meaning: "основное покрытие"},
+                    {part: "З", meaning: "железистое покрытие"},
+                    {part: "С", meaning: "для сварки"},
+                    {part: "12", meaning: "номер разработки"}
+                ],
+                application: "Сварка конструкций из низкоуглеродистых сталей"
+            },
+            {
+                mark: "ЦЛ-11",
+                decoding: [
+                    {part: "Ц", meaning: "целлюлозное покрытие"},
+                    {part: "Л", meaning: "для легированных сталей"},
+                    {part: "11", meaning: "номер разработки"}
+                ],
+                application: "Сварка теплоустойчивых и коррозионно-стойких сталей"
+            },
+            {
+                mark: "ОЗЧ-2",
+                decoding: [
+                    {part: "О", meaning: "основное покрытие"},
+                    {part: "З", meaning: "железистое покрытие"},
+                    {part: "Ч", meaning: "для чугуна"},
+                    {part: "2", meaning: "номер разработки"}
+                ],
+                application: "Наплавка и сварка чугунных деталей"
+            }
+        ];
+
+        // Данные для практики
+        const practiceQuestions = [
+            {
+                question: "Что означает 'У' в маркировке УОНИ-13/55?",
+                options: [
+                    "Универсальный",
+                    "для углеродистых сталей",
+                    "Улучшенный",
+                    "Узкоспециализированный",
+                    "Ударопрочный"
+                ],
+                correct: 1
+            },
+            {
+                question: "Какое покрытие у электрода АНО-21?",
+                options: [
+                    "Основное",
+                    "Рутиловое",
+                    "Кислое",
+                    "Целлюлозное",
+                    "Железистое"
+                ],
+                correct: 2
+            },
+            {
+                question: "Для каких сталей предназначен электрод ЦЛ-11?",
+                options: [
+                    "Углеродистых",
+                    "Низколегированных",
+                    "Легированных",
+                    "Высоколегированных",
+                    "Чугунных"
+                ],
+                correct: 2
+            },
+            {
+                question: "Что означают цифры '55' в УОНИ-13/55?",
+                options: [
+                    "Номер разработки",
+                    "Температура плавления",
+                    "Прочность 55 кгс/мм²",
+                    "Диаметр электрода",
+                    "Год разработки"
+                ],
+                correct: 2
+            },
+            {
+                question: "Для чего предназначен электрод ОЗЧ-2?",
+                options: [
+                    "Сварка алюминия",
+                    "Сварка чугуна",
+                    "Сварка меди",
+                    "Сварка титана",
+                    "Сварка нержавеющей стали"
+                ],
+                correct: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedOption = null;
+
+        // Функция переключения экранов
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(`${screenId}-screen`).classList.add('active');
+            
+            if (screenId === 'learning') {
+                renderLearningContent();
+            } else if (screenId === 'practice') {
+                resetPractice();
+            }
+        }
+
+        // Рендеринг контента обучения
+        function renderLearningContent() {
+            const container = document.getElementById('learning-content');
+            container.innerHTML = '';
+            
+            electrodeData.forEach(electrode => {
+                const card = document.createElement('div');
+                card.className = 'electrode-card';
+                
+                let decodingHTML = '<div class="decoding">';
+                electrode.decoding.forEach(item => {
+                    decodingHTML += `<div class="decoding-item"><strong>${item.part}</strong> - ${item.meaning}</div>`;
+                });
+                decodingHTML += '</div>';
+                
+                card.innerHTML = `
+                    <div class="electrode-mark">${electrode.mark}</div>
+                    ${decodingHTML}
+                    <div class="application">Применение: ${electrode.application}</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Сброс практики
+        function resetPractice() {
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        // Загрузка вопроса
+        function loadQuestion() {
+            const questionData = practiceQuestions[currentQuestion];
+            document.getElementById('progress').textContent = `Вопрос ${currentQuestion + 1} из ${practiceQuestions.length}`;
+            document.getElementById('question').textContent = questionData.question;
+            document.getElementById('result').textContent = '';
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            questionData.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(optionDiv, index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            document.getElementById('submit-btn').disabled = true;
+            selectedOption = null;
+        }
+
+        // Выбор опции
+        function selectOption(element, index) {
+            // Сброс предыдущего выбора
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            selectedOption = index;
+            document.getElementById('submit-btn').disabled = false;
+        }
+
+        // Проверка ответа
+        function checkAnswer() {
+            if (selectedOption === null) return;
+            
+            const questionData = practiceQuestions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            
+            // Показать правильный и неправильный ответ
+            options.forEach((opt, index) => {
+                if (index === questionData.correct) {
+                    opt.classList.add('correct');
+                } else if (index === selectedOption && selectedOption !== questionData.correct) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            // Обновить счет
+            if (selectedOption === questionData.correct) {
+                score++;
+                document.getElementById('result').textContent = '✅ Правильно!';
+                document.getElementById('result').style.color = '#48bb78';
+            } else {
+                document.getElementById('result').textContent = '❌ Неправильно!';
+                document.getElementById('result').style.color = '#f56565';
+            }
+            
+            document.getElementById('submit-btn').disabled = true;
+            
+            // Переход к следующему вопросу или результату
+            setTimeout(() => {
+                if (currentQuestion < practiceQuestions.length - 1) {
+                    currentQuestion++;
+                    loadQuestion();
+                } else {
+                    showFinalResult();
+                }
+            }, 1500);
+        }
+
+        // Показать финальный результат
+        function showFinalResult() {
+            document.getElementById('question').textContent = 'Тест завершен!';
+            document.getElementById('options').innerHTML = '';
+            document.getElementById('submit-btn').style.display = 'none';
+            
+            let resultText = `Ваш результат: ${score} из ${practiceQuestions.length}<br><br>`;
+            
+            if (score === practiceQuestions.length) {
+                resultText += '🏆 Отлично! Вы отлично знаете маркировку электродов!';
+                document.getElementById('result').style.color = '#48bb78';
+            } else if (score >= practiceQuestions.length / 2) {
+                resultText += '👍 Хорошо! У вас есть базовые знания маркировки.';
+                document.getElementById('result').style.color = '#4299e1';
+            } else {
+                resultText += '📚 Нужно еще немного потренироваться!';
+                document.getElementById('result').style.color = '#ed8936';
+            }
+            
+            document.getElementById('result').innerHTML = resultText;
+            
+            // Добавить кнопку перезапуска
+            const restartBtn = document.createElement('button');
+            restartBtn.className = 'submit-btn';
+            restartBtn.textContent = 'Пройти тест заново';
+            restartBtn.onclick = resetPractice;
+            restartBtn.style.display = 'block';
+            restartBtn.style.marginTop = '20px';
+            document.getElementById('practice-screen').appendChild(restartBtn);
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            // Удалить кнопку перезапуска при переходе с экрана практики
+            document.querySelectorAll('.back-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const restartBtn = document.querySelector('#practice-screen .submit-btn:last-child');
+                    if (restartBtn && restartBtn.textContent === 'Пройти тест заново') {
+                        restartBtn.remove();
+                        document.getElementById('submit-btn').style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

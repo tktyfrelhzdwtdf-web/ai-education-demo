@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 Контрольный симулятор сварки</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .simulator {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        .param-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .value-display {
+            min-width: 60px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .check-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 15px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .check-button:hover {
+            background: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+        .funny-comment {
+            font-size: 20px;
+            margin: 15px 0;
+            font-style: italic;
+            font-weight: bold;
+        }
+        .emoji-result {
+            font-size: 50px;
+            margin: 10px 0;
+        }
+        .defects-list {
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+        }
+        .defects-list li {
+            padding: 10px;
+            margin: 8px 0;
+            background: #fdedec;
+            border-radius: 5px;
+            color: #c0392b;
+            font-weight: bold;
+        }
+        .success-item {
+            background: #e8f6ef !important;
+            color: #27ae60 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator">
+        <h1>📝 КОНТРОЛЬНЫЙ СИМУЛЯТОР СВАРКИ</h1>
+        <div class="subtitle">Настройте параметры и проверьте свой результат!</div>
+        
+        <div class="param-group">
+            <label>Толщина металла: <span id="thicknessValue" class="value-display">3 мм</span></label>
+            <div class="slider-container">
+                <span>1 мм</span>
+                <input type="range" min="1" max="20" value="3" class="slider" id="thicknessSlider">
+                <span>20 мм</span>
+            </div>
+        </div>
+
+        <div class="param-group">
+            <label>Диаметр электрода: <span id="electrodeValue" class="value-display">2.5 мм</span></label>
+            <div class="slider-container">
+                <span>1.6 мм</span>
+                <input type="range" min="1.6" max="6" value="2.5" step="0.5" class="slider" id="electrodeSlider">
+                <span>6 мм</span>
+            </div>
+        </div>
+
+        <div class="param-group">
+            <label>Ток сварки: <span id="currentValue" class="value-display">80 А</span></label>
+            <div class="slider-container">
+                <span>40 А</span>
+                <input type="range" min="40" max="300" value="80" class="slider" id="currentSlider">
+                <span>300 А</span>
+            </div>
+        </div>
+
+        <button class="check-button" onclick="checkResult()">ПРОВЕРИТЬ РЕЗУЛЬТАТ</button>
+
+        <div id="result" class="result">
+            <div class="emoji-result" id="emojiResult">🔧</div>
+            <div class="score" id="scoreResult">Оценка: 0/10 баллов</div>
+            <ul id="defectsList" class="defects-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const weldingParameters = {
+            '1.0': { electrode: 1.6, currentMin: 40, currentMax: 60 },
+            '2.0': { electrode: 2.0, currentMin: 60, currentMax: 80 },
+            '3.0': { electrode: 2.5, currentMin: 80, currentMax: 110 },
+            '4.0': { electrode: 2.5, currentMin: 90, currentMax: 130 },
+            '5.0': { electrode: 3.0, currentMin: 110, currentMax: 150 },
+            '6.0': { electrode: 3.0, currentMin: 130, currentMax: 170 },
+            '8.0': { electrode: 4.0, currentMin: 150, currentMax: 200 },
+            '10.0': { electrode: 4.0, currentMin: 180, currentMax: 230 }
+        };
+
+        function checkResult() {
+            const thickness = parseFloat(thicknessSlider.value);
+            const electrode = parseFloat(electrodeSlider.value);
+            const current = parseInt(currentSlider.value);
+            const optimal = getOptimalParameters(thickness);
+            
+            let score = 0;
+            let maxScore = 10;
+            let defects = [];
+            let successes = [];
+            
+            // Проверка электрода (4 балла)
+            if (Math.abs(electrode - optimal.electrode) <= 0.3) {
+                score += 4;
+                successes.push("✅ Диаметр электрода оптимален");
+            } else if (Math.abs(electrode - optimal.electrode) <= 0.7) {
+                score += 2;
+                defects.push("📏 Диаметр электрода близок к оптимальному, но не идеален");
+            } else {
+                defects.push("📏 Неправильный диаметр электрода");
+            }
+            
+            // Проверка тока (4 балла)
+            if (current >= optimal.currentMin && current <= optimal.currentMax) {
+                score += 4;
+                successes.push("✅ Ток сварки в оптимальном диапазоне");
+            } else if (Math.abs(current - (optimal.currentMin + optimal.currentMax)/2) <= 20) {
+                score += 2;
+                defects.push("⚡ Ток близок к оптимальному, но не идеален");
+            } else {
+                defects.push("⚡ Неправильный ток сварки");
+            }
+            
+            // Проверка на критические ошибки (2 балла)
+            if (!(electrode > thickness && thickness < 3)) {
+                score += 2;
+                successes.push("✅ Соотношение электрод/толщина правильное");
+            } else {
+                defects.push("🔥 КРИТИЧЕСКАЯ ОШИБКА: Прожиг - электрод слишком большой для тонкого металла");
+                score = Math.max(0, score - 2); // Штраф за критическую ошибку
+            }
+            
+            // Определяем результат
+            let funnyComment, emoji;
+            
+            if (score >= 9) {
+                funnyComment = "Браво! Вы - виртуоз сварочного дела! 🏆";
+                emoji = "🎯";
+            } else if (score >= 7) {
+                funnyComment = "Отлично! Металл в надёжных руках! 👍";
+                emoji = "🔧";
+            } else if (score >= 5) {
+                funnyComment = "Неплохо, но есть куда расти! 🌱";
+                emoji = "⚠️";
+            } else {
+                funnyComment = "Эх... нужно учить матчасть! 📚";
+                emoji = "💥";
+            }
+            
+            // Обновляем интерфейс
+            scoreResult.textContent = `Оценка: ${score}/${maxScore} баллов`;
+            funnyComment.textContent = funnyComment;
+            emojiResult.textContent = emoji;
+            
+            // Показываем успехи и дефекты
+            defectsList.innerHTML = '';
+            
+            // Сначала успехи
+            successes.forEach(success => {
+                const li = document.createElement('li');
+                li.textContent = success;
+                li.className = 'success-item';
+                defectsList.appendChild(li);
+            });
+            
+            // Затем дефекты
+            defects.forEach(defect => {
+                const li = document.createElement('li');
+                li.textContent = defect;
+                defectsList.appendChild(li);
+            });
+            
+            // Показываем результат
+            resultDiv.style.display = 'block';
+        }
+
+        function getOptimalParameters(thickness) {
+            const thicknessKey = Object.keys(weldingParameters).reduce((prev, curr) => {
+                return Math.abs(curr - thickness) < Math.abs(prev - thickness) ? curr : prev;
+            });
+            return weldingParameters[thicknessKey];
+        }
+
+        // Получаем элементы
+        const thicknessSlider = document.getElementById('thicknessSlider');
+        const electrodeSlider = document.getElementById('electrodeSlider');
+        const currentSlider = document.getElementById('currentSlider');
+        const thicknessValue = document.getElementById('thicknessValue');
+        const electrodeValue = document.getElementById('electrodeValue');
+        const currentValue = document.getElementById('currentValue');
+        const resultDiv = document.getElementById('result');
+        const scoreResult = document.getElementById('scoreResult');
+        const funnyComment = document.getElementById('funnyComment');
+        const emojiResult = document.getElementById('emojiResult');
+        const defectsList = document.getElementById('defectsList');
+
+        // Обновление значений
+        thicknessSlider.addEventListener('input', () => {
+            thicknessValue.textContent = thicknessSlider.value + ' мм';
+        });
+        electrodeSlider.addEventListener('input', () => {
+            electrodeValue.textContent = electrodeSlider.value + ' мм';
+        });
+        currentSlider.addEventListener('input', () => {
+            currentValue.textContent = currentSlider.value + ' А';
+        });
+    </script>
+</body>
+</html>

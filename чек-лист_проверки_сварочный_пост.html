@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чек-лист проверки сварочного поста</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .checklist {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            width: 100%;
+            padding: 30px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .workspace-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #e74c3c;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+        .before-work {
+            border-left-color: #27ae60;
+        }
+        .during-work {
+            border-left-color: #3498db;
+        }
+        .after-work {
+            border-left-color: #f39c12;
+        }
+        .weekly {
+            border-left-color: #9b59b6;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+        .check-item input[type="checkbox"] {
+            margin-right: 15px;
+            margin-top: 3px;
+            transform: scale(1.2);
+        }
+        .check-content {
+            flex: 1;
+        }
+        .check-text {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .check-criteria {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-style: italic;
+        }
+        .signature {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #bdc3c7;
+        }
+        .signature-line {
+            width: 200px;
+            border-bottom: 1px solid #2c3e50;
+            text-align: center;
+            padding-bottom: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 10px;
+            }
+            .checklist {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="checklist">
+        <div class="header">
+            <h1>ЧЕК-ЛИСТ ПРОВЕРКИ СВАРОЧНОГО ПОСТА</h1>
+            <div class="subtitle">Профессия: Сварщик ручной и частично механизированной сварки (наплавки)</div>
+        </div>
+
+        <div class="workspace-info">
+            <strong>Сварочный пост №:</strong> ______ <strong>Дата:</strong> ______ <strong>Смена:</strong> ______
+        </div>
+
+        <div class="section before-work">
+            <h2>🔍 ДО НАЧАЛА РАБОТЫ</h2>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Проверка исправности сварочного оборудования</div>
+                    <div class="check-criteria">Критерий: Аппарат включается, нет повреждений кабелей, заземление подключено</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Проверка системы вентиляции</div>
+                    <div class="check-criteria">Критерий: Вытяжка работает, воздуховоды чистые, отсутствие засоров</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Контроль наличия и исправности СИЗ</div>
+                    <div class="check-criteria">Критерий: Щиток/маска без повреждений, краги, спецодежда, защитные очки</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Проверка средств пожаротушения</div>
+                    <div class="check-criteria">Критерий: Огнетушитель заряжен, пломба цела, доступ не загроможден</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Осмотр рабочей зоны</div>
+                    <div class="check-criteria">Критерий: Отсутствие горючих материалов в радиусе 5 м, чистота пола</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section during-work">
+            <h2>⚡ ВО ВРЕМЯ РАБОТЫ</h2>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Контроль стабильности сварочной дуги</div>
+                    <div class="check-criteria">Критерий: Отсутствие скачков напряжения, стабильное горение дуги</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Наблюдение за температурой оборудования</div>
+                    <div class="check-criteria">Критерий: Отсутствие перегрева трансформатора, кабелей, горелки</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Контроль качества защиты органов дыхания</div>
+                    <div class="check-criteria">Критерий: Использование респиратора при работе в закрытом пространстве</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section after-work">
+            <h2>🧹 ПОСЛЕ ОКОНЧАНИЯ РАБОТЫ</h2>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Отключение оборудования от сети</div>
+                    <div class="check-criteria">Критерий: Сварочный аппарат отключен, кабели смотаны</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Уборка рабочего места</div>
+                    <div class="check-criteria">Критерий: Убраны огарки электродов, металлическая стружка, пыль</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Сдача оборудования и инструмента</div>
+                    <div class="check-criteria">Критерий: Инструмент чистый, размещен на местах хранения</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Проверка противопожарного состояния</div>
+                    <div class="check-criteria">Критерий: Отсутствие тлеющих материалов, искр, источников возгорания</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section weekly">
+            <h2>📅 ЕЖЕНЕДЕЛЬНАЯ ПРОВЕРКА</h2>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Проверка сопротивления изоляции кабелей</div>
+                    <div class="check-criteria">Критерий: Сопротивление изоляции не менее 1 МОм (мегомметром)</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Контроль заземляющих устройств</div>
+                    <div class="check-criteria">Критерий: Сопротивление заземления не более 4 Ом</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Техническое обслуживание вентиляции</div>
+                    <div class="check-criteria">Критерий: Очистка фильтров, проверка работоспособности вентиляторов</div>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <input type="checkbox">
+                <div class="check-content">
+                    <div class="check-text">Ревизия средств пожаротушения</div>
+                    <div class="check-criteria">Критерий: Проверка давления в огнетушителях, сроков перезарядки</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="signature">
+            <div>
+                <div class="signature-line">Подпись сварщика</div>
+            </div>
+            <div>
+                <div class="signature-line">Подпись мастера</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Чек-лист должен заполняться ежесменно. Все замечания немедленно сообщать мастеру участка.</p>
+        </div>
+    </div>
+</body>
+</html>
